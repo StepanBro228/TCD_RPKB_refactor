@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/checkbox_container"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_margin="4dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        android:background="@drawable/selector_custom_checkbox">
+
+        <ImageView
+            android:id="@+id/check_icon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_check_white"
+            android:contentDescription="Выбрано"
+            android:visibility="invisible" />
+
+    </androidx.cardview.widget.CardView>
+</merge> 

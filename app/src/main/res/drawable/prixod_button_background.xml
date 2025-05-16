@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/prixodAccent">
+    <item>
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/prixodCardShadow" />
+                    <padding android:bottom="2dp" android:right="1dp" />
+                    <corners android:radius="24dp" />
+                </shape>
+            </item>
+            <item android:bottom="2dp" android:right="1dp">
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:angle="135"
+                        android:endColor="@color/prixodButtonGradientEnd"
+                        android:startColor="@color/prixodButtonGradientStart"
+                        android:type="linear" />
+                    <corners android:radius="24dp" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</ripple> 

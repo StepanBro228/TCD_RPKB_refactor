@@ -1,0 +1,113 @@
+---
+description: Always read file bebore editing or creating files.
+globs: 
+alwaysApply: false
+---
+rules:
+  - name: "App module – UI and Presentation Layer"
+    autoAttach:
+      whenEditingFileMatching: "app/src/**/*.java"
+    description: |
+      🧭 You must **strictly follow Clean Architecture**, **MVVM pattern**, and **SOLID principles**.
+
+      📌 This file belongs to the **`app` module**, responsible for the UI layer in Clean Architecture.
+
+      🔷 Project Structure Reminder:
+      - `app` — UI, ViewModel, Navigation.
+      - `domain` — UseCases, Entities, Interfaces.
+      - `data` — DataSources, Mappers, Repository implementations.
+
+      🧩 Responsibilities of `app`:
+      - Contains Activities, Fragments, ViewModels.
+      - Handles navigation and DI setup (Hilt).
+      - Manages UI state (Loading, Success, Error).
+      - **MUST NOT** contain business logic or direct data access.
+
+      📁 Note on XML Resources:
+      - UI XML files: `app/src/main/res/layout/`, `anim/`, `drawable/`, etc.
+
+      📦 Offline Assets:
+      - All files used for **offline operation** (e.g. test data, config, mock API responses) must be placed in:
+        `app/src/main/assets/`
+
+    enforcement: strict
+
+  - name: "Domain module – Business Logic Layer"
+    autoAttach:
+      whenEditingFileMatching: "domain/src/**/*.java"
+    description: |
+      🧭 You must **strictly follow Clean Architecture**, **MVVM pattern**, and **SOLID principles**.
+
+      📌 This file belongs to the **`domain` module**, the core of Clean Architecture.
+
+      🔷 Project Structure Reminder:
+      - `app` — UI, ViewModel, Navigation.
+      - `domain` — UseCases, Entities, Interfaces.
+      - `data` — DataSources, Mappers, Repository implementations.
+
+      🧠 Responsibilities of `domain`:
+      - Contains all business rules, entities (POJOs), use cases, and interfaces.
+      - Must be **100% pure Java** — no Android SDK or libraries.
+      - Fully unit-testable and framework-agnostic.
+
+      ✔️ Follow SOLID principles:
+      - Single Responsibility, Open-Closed, Dependency Inversion.
+
+    enforcement: strict
+
+  - name: "Data module – Data & Repository Layer"
+    autoAttach:
+      whenEditingFileMatching: "data/src/**/*.java"
+    description: |
+      🧭 You must **strictly follow Clean Architecture**, **MVVM pattern**, and **SOLID principles**.
+
+      📌 This file belongs to the **`data` module**, acting as the data provider in Clean Architecture.
+
+      🔷 Project Structure Reminder:
+      - `app` — UI, ViewModel, Navigation.
+      - `domain` — UseCases, Entities, Interfaces.
+      - `data` — DataSources, Mappers, Repository implementations.
+
+      🗄 Responsibilities of `data`:
+      - Implements domain interfaces.
+      - Uses Room, Retrofit, Gson, etc.
+      - Maps DTOs to domain entities.
+      - Deals with local and remote data.
+
+      ❗ Important:
+      - `domain` MUST NOT depend on `data`.
+      - Handle all errors here.
+      - DTOs must never reach UI directly.
+
+    enforcement: strict
+
+  - name: "XML UI Resource Rule"
+    autoAttach:
+      whenEditingFileMatching: "app/src/main/res/**/*.xml"
+    description: |
+      🧭 You must **strictly follow Clean Architecture**, **MVVM pattern**, and **SOLID principles**.
+
+      📁 This file is part of the UI resources in the `app` module.
+
+      - Layouts, animations, drawables, styles — used strictly for UI.
+      - Keep structure: `layout/`, `anim/`, `menu/`, etc.
+      - Link only to UI elements; no logic here.
+
+    enforcement: strict
+
+  - name: "Offline assets and test data"
+    autoAttach:
+      whenEditingFileMatching: "app/src/main/assets/**/*"
+    description: |
+      🧭 You must **strictly follow Clean Architecture**, **MVVM pattern**, and **SOLID principles**.
+
+      📦 This file is located in the `assets/` directory of the `app` module.
+
+      - Used for **offline mode**, testing, preloading configuration, or mock data.
+      - Example files: `.json`, `.txt`, `.cfg`, etc.
+      - Access via Android's `AssetManager` in the UI or data initialization code — but never from `domain`.
+
+      🧩 Reminder:
+      - `app` contains assets, but `domain` and `data` must remain unaware of file-based resources.
+
+    enforcement: strict

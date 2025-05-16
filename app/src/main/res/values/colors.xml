@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Основная цветовая схема -->
+    <color name="colorPrimary">#5D4037</color>
+    <color name="colorPrimaryDark">#3E2723</color>
+    <color name="colorAccent">#8D6E63</color>
+    
+    <!-- Фоновые цвета -->
+    <color name="colorBackground">#F5F5F5</color>
+    <color name="colorSurface">#FFFFFF</color>
+    
+    <!-- Текстовые цвета -->
+    <color name="colorText">#212121</color>
+    <color name="colorTextLight">#757575</color>
+    <color name="colorTextSecondary">#616161</color>
+    <color name="colorWhite">#FFFFFF</color>
+    
+    <!-- Функциональные цвета -->
+    <color name="colorError">#D32F2F</color>
+    <color name="colorSuccess">#388E3C</color>
+    <color name="colorDivider">#E0E0E0</color>
+    
+    <!-- Индикаторы -->
+    <color name="colorIndicatorClosed">#957165</color>
+    <color name="colorIndicatorOpen">#4E342E</color>
+    
+    <!-- Новые цвета для Prixod -->
+    <color name="prixodPrimary">#1E3A8A</color>
+    <color name="prixodPrimaryDark">#0F2361</color>
+    <color name="prixodAccent">#F59E0B</color>
+    <color name="prixodBackground">#EFF6FF</color>
+    <color name="prixodSurface">#FFFFFF</color>
+    <color name="prixodHeaderBackground">#1E3A8A</color>
+    <color name="prixodItemBackground">#FFFFFF</color>
+    <color name="prixodItemBackgroundAlt">#F0F9FF</color>
+    <color name="prixodText">#1F2937</color>
+    <color name="prixodTextSecondary">#4B5563</color>
+    <color name="prixodButtonBackground">#1E3A8A</color>
+    <color name="prixodButtonText">#FFFFFF</color>
+    <color name="prixodHighlight">#F59E0B</color>
+    <color name="prixodSecondaryButtonBackground">#3B82F6</color>
+    
+    <!-- Дополнительные цвета для улучшенного дизайна -->
+    <color name="prixodGradientStart">#DBEAFE</color>
+    <color name="prixodGradientEnd">#EFF6FF</color>
+    <color name="prixodCardShadow">#29000000</color>
+    <color name="prixodItemBorder">#BFDBFE</color>
+    <color name="prixodItemHighlight">#FEF3C7</color>
+    <color name="prixodItemSelected">#FDE68A</color>
+    <color name="prixodHeaderGradientStart">#1E40AF</color>
+    <color name="prixodHeaderGradientEnd">#1E3A8A</color>
+    <color name="prixodButtonGradientStart">#2563EB</color>
+    <color name="prixodButtonGradientEnd">#1E40AF</color>
+    <color name="prixodEditTextBorder">#93C5FD</color>
+    <color name="prixodEditTextFocused">#3B82F6</color>
+    
+    <!-- Цвета для кнопок фильтрации -->
+    <color name="applyButtonColor">#1A237E</color>
+    <color name="resetButtonColor">#B71C1C</color>
+</resources>

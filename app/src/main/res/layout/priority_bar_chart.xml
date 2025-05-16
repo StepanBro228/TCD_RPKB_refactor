@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="20dp"
+    app:cardCornerRadius="10dp"
+    app:cardElevation="1dp"
+    android:layout_marginHorizontal="4dp">
+    
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        
+        <!-- Основная диаграмма -->
+        <LinearLayout
+            android:id="@+id/priority_chart_container"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/total_badge">
+        
+            <!-- Секция для Срочных -->
+            <FrameLayout
+                android:id="@+id/urgent_section"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0"
+                android:background="#FF0000">
+                
+                <TextView
+                    android:id="@+id/urgent_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:layout_gravity="center"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:text="0" />
+            </FrameLayout>
+            
+            <!-- Секция для Высоких -->
+            <FrameLayout
+                android:id="@+id/high_section"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0"
+                android:background="#FF9800">
+                
+                <TextView
+                    android:id="@+id/high_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:layout_gravity="center"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:text="0" />
+            </FrameLayout>
+            
+            <!-- Секция для Средних -->
+            <FrameLayout
+                android:id="@+id/medium_section"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0"
+                android:background="#FFEB3B">
+                
+                <TextView
+                    android:id="@+id/medium_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:layout_gravity="center"
+                    android:textColor="#000000"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:text="0" />
+            </FrameLayout>
+            
+            <!-- Секция для Низких и без приоритета -->
+            <FrameLayout
+                android:id="@+id/low_section"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0"
+                android:background="#4CAF50">
+                
+                <TextView
+                    android:id="@+id/low_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:layout_gravity="center"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:text="0" />
+            </FrameLayout>
+        </LinearLayout>
+        
+        <!-- Бейдж с общим количеством -->
+        <TextView
+            android:id="@+id/total_badge"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:background="#2196F3"
+            android:paddingHorizontal="8dp"
+            android:gravity="center"
+            android:textColor="#FFFFFF"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:text="0"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+            
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView> 

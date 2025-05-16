@@ -1,0 +1,698 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
+    tools:context=".UI.movelist.activity.MoveList_menu">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:animateLayoutChanges="true">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/segment_control_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginEnd="4dp"
+            app:cardCornerRadius="6dp"
+            app:cardElevation="3dp"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <LinearLayout
+                android:id="@+id/segment_control"
+                android:layout_width="match_parent"
+                android:layout_height="30dp"
+                android:orientation="horizontal"
+                android:background="@color/prixodItemBorder"
+                android:padding="2dp">
+
+                <TextView
+                    android:id="@+id/segment_formirovano"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/segment_ripple_effect"
+                    android:gravity="center"
+                    android:text="Сформировано"
+                    android:textColor="@drawable/segment_text_color_selector"
+                    android:textSize="13sp"
+                    android:textAllCaps="true"
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:focusable="false" />
+
+                <TextView
+                    android:id="@+id/segment_komplektuetsa"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/segment_ripple_effect"
+                    android:gravity="center"
+                    android:text="Комплектуется"
+                    android:textColor="@drawable/segment_text_color_selector"
+                    android:textSize="13sp"
+                    android:textAllCaps="true"
+                    android:clickable="true"
+                    android:focusable="false" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <FrameLayout
+            android:id="@+id/priority_stats_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="0dp"
+            android:layout_marginBottom="0dp"
+            app:layout_constraintTop_toBottomOf="@+id/segment_control_container"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+            
+            <LinearLayout
+                android:id="@+id/priority_stats_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"/>
+                
+        </FrameLayout>
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/viewPager"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="1dp"
+            app:layout_constraintTop_toBottomOf="@+id/priority_stats_container"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/nav_menu_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginBottom="16dp"
+            android:clickable="true"
+            android:contentDescription="Меню"
+            android:focusable="true"
+            app:backgroundTint="@color/prixodPrimary"
+            app:borderWidth="0dp"
+            app:elevation="8dp"
+            app:fabSize="normal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:rippleColor="@color/prixodAccent"
+            app:srcCompat="@android:drawable/ic_menu_sort_by_size"
+            app:tint="@color/colorWhite" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/refresh_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            android:clickable="true"
+            android:contentDescription="Обновить"
+            android:focusable="true"
+            android:visibility="gone"
+            app:backgroundTint="@color/prixodPrimary"
+            app:borderWidth="0dp"
+            app:elevation="8dp"
+            app:fabSize="normal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:rippleColor="@color/prixodAccent"
+            app:srcCompat="@android:drawable/ic_popup_sync"
+            app:tint="@color/colorWhite" />
+
+        <!-- Индикатор активности фильтров (метка) -->
+        <View
+            android:id="@+id/filter_indicator"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_marginEnd="5dp"
+            android:layout_marginBottom="-15dp"
+            android:background="@drawable/filter_indicator_shape"
+            android:elevation="9dp"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toTopOf="@+id/nav_menu_button"
+            app:layout_constraintEnd_toEndOf="@+id/nav_menu_button" />
+
+        <!-- Панель для кнопок действий выбранных элементов -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/actionButtonsPanel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp"
+            android:visibility="gone"
+            app:cardCornerRadius="6dp"
+            app:cardElevation="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="8dp"
+                android:paddingEnd="4dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp">
+
+                <TextView
+                    android:id="@+id/selectedItemsCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:text="Выбрано: 0"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_marginEnd="6dp" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:id="@+id/btnMoveToWork"
+                    android:layout_width="wrap_content"
+                    android:layout_height="42dp"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/prixodPrimary"
+                    android:minWidth="110dp"
+                    android:minHeight="0dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:text="Взять в работу"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
+
+                <Button
+                    android:id="@+id/btnMoveFromWork"
+                    android:layout_width="wrap_content"
+                    android:layout_height="42dp"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/prixodPrimary"
+                    android:minWidth="110dp"
+                    android:minHeight="0dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:text="Вернуть из работы"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
+
+                <Button
+                    android:id="@+id/btnCancelSelection"
+                    android:layout_width="wrap_content"
+                    android:layout_height="42dp"
+                    android:backgroundTint="@color/prixodItemBorder"
+                    android:minWidth="75dp"
+                    android:minHeight="0dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:text="Отмена"
+                    android:textAllCaps="false"
+                    android:textSize="13sp"
+                    android:textColor="@android:color/black" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/navigation_view"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@android:color/transparent"
+        android:fitsSystemWindows="false"
+        app:elevation="0dp"
+        app:itemIconTint="@null"
+        app:itemTextColor="@null"
+        app:headerLayout="@null">
+        
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/white">
+        
+            <androidx.core.widget.NestedScrollView
+                android:id="@+id/filter_scroll_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:scrollbars="none"
+                android:background="@android:color/white"
+                android:clipToPadding="true"
+                android:overScrollMode="never"
+                android:paddingBottom="32dp"
+                android:isScrollContainer="true"
+                android:fadeScrollbars="false">
+            
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@android:color/white">
+                    
+                    <!-- Шапка Navigation View -->
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/nav_header"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="16dp"
+                        android:background="@drawable/combined_nav_header_background">
+                        
+                        <!-- Карточка пользователя -->
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/user_name_card"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:cardCornerRadius="16dp"
+                            app:cardElevation="4dp"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent">
+
+                            <androidx.constraintlayout.widget.ConstraintLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:padding="8dp"
+                                android:background="@drawable/user_info_gradient">
+
+                                <ImageView
+                                    android:id="@+id/user_avatar"
+                                    android:layout_width="48dp"
+                                    android:layout_height="48dp"
+                                    android:background="@drawable/circular_avatar_border"
+                                    android:contentDescription="Аватар пользователя"
+                                    android:padding="2dp"
+                                    android:scaleType="fitCenter"
+                                    app:layout_constraintStart_toStartOf="parent"
+                                    app:layout_constraintTop_toTopOf="parent"
+                                    app:layout_constraintBottom_toBottomOf="parent" />
+
+                                <TextView
+                                    android:id="@+id/user_full_name"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="16dp"
+                                    android:layout_marginEnd="8dp"
+                                    android:ellipsize="end"
+                                    android:maxLines="1"
+                                    android:text="Петров Сергей А."
+                                    android:textColor="@android:color/white"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"
+                                    app:layout_constraintBottom_toTopOf="@+id/user_role"
+                                    app:layout_constraintEnd_toEndOf="parent"
+                                    app:layout_constraintStart_toEndOf="@+id/user_avatar"
+                                    app:layout_constraintTop_toTopOf="@+id/user_avatar"
+                                    app:layout_constraintVertical_chainStyle="packed" />
+
+                                <TextView
+                                    android:id="@+id/user_role"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="4dp"
+                                    android:layout_marginTop="4dp"
+                                    android:background="@drawable/user_role_badge"
+                                    android:paddingStart="10dp"
+                                    android:paddingTop="2dp"
+                                    android:paddingEnd="10dp"
+                                    android:paddingBottom="2dp"
+                                    android:text="Менеджер"
+                                    android:textColor="@android:color/white"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold"
+                                    app:layout_constraintBottom_toBottomOf="@+id/user_avatar"
+                                    app:layout_constraintStart_toEndOf="@+id/user_avatar"
+                                    app:layout_constraintTop_toBottomOf="@+id/user_full_name" />
+                            </androidx.constraintlayout.widget.ConstraintLayout>
+                        </androidx.cardview.widget.CardView>
+                        
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                    
+                    <!-- Разделитель -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/prixodItemBorder"
+                        android:alpha="0.3" />
+                    
+                    <!-- Контент фильтров -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+                        
+                        <!-- Заголовок фильтров -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Фильтры"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/prixodTextSecondary"
+                            android:layout_marginBottom="5dp" />
+                        
+                        <!-- Чекбоксы в одну строку -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="10dp">
+                            
+                            <CheckBox
+                                android:id="@+id/filter_cps"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:checked="true"
+                                android:text="ЦПС"
+                                android:textSize="14sp"
+                                android:layout_marginEnd="25dp"
+                                android:textColor="@color/prixodTextSecondary" />
+                                
+                            <CheckBox
+                                android:id="@+id/filter_availability"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:checked="true"
+                                android:text="Доступность"
+                                android:textSize="14sp"
+                                android:textColor="@color/prixodTextSecondary" />
+                        </LinearLayout>
+                        
+                        <!-- Отправитель -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginBottom="12dp">
+                            
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Отправитель:"
+                                android:textSize="14sp"
+                                android:textColor="@color/prixodTextSecondary" />
+                            
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="4dp">
+                                
+                                <EditText
+                                    android:id="@+id/filter_sender"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_weight="1"
+                                    android:background="@drawable/filter_edittext_background"
+                                    android:paddingStart="8dp"
+                                    android:paddingEnd="8dp"
+                                    android:hint="Введите отправителя"
+                                    android:textSize="14sp"
+                                    android:singleLine="true"
+                                    android:imeOptions="actionNext"
+                                    android:nextFocusDown="@id/filter_movement_number" />
+                                
+                                <ImageButton
+                                    android:id="@+id/clear_sender"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:src="@android:drawable/ic_menu_close_clear_cancel"
+                                    android:contentDescription="Очистить" />
+                            </LinearLayout>
+                        </LinearLayout>
+                        
+                        <!-- Номер перемещения -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginBottom="12dp">
+                            
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Номер перемещения:"
+                                android:textSize="14sp"
+                                android:textColor="@color/prixodTextSecondary" />
+                            
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="4dp">
+                                
+                                <EditText
+                                    android:id="@+id/filter_movement_number"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_weight="1"
+                                    android:background="@drawable/filter_edittext_background"
+                                    android:paddingStart="8dp"
+                                    android:paddingEnd="8dp"
+                                    android:hint="Введите номер"
+                                    android:textSize="14sp"
+                                    android:singleLine="true"
+                                    android:inputType="number"
+                                    android:imeOptions="actionNext"
+                                    android:nextFocusDown="@id/filter_recipient" />
+                                
+                                <ImageButton
+                                    android:id="@+id/clear_movement_number"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:src="@android:drawable/ic_menu_close_clear_cancel"
+                                    android:contentDescription="Очистить" />
+                            </LinearLayout>
+                        </LinearLayout>
+                        
+                        <!-- Получатель -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginBottom="12dp">
+                            
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Получатель:"
+                                android:textSize="14sp"
+                                android:textColor="@color/prixodTextSecondary" />
+                            
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="4dp">
+                                
+                                <EditText
+                                    android:id="@+id/filter_recipient"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_weight="1"
+                                    android:background="@drawable/filter_edittext_background"
+                                    android:paddingStart="8dp"
+                                    android:paddingEnd="8dp"
+                                    android:hint="Введите получателя"
+                                    android:textSize="14sp"
+                                    android:singleLine="true"
+                                    android:imeOptions="actionNext"
+                                    android:nextFocusDown="@id/filter_assembler" />
+                                
+                                <ImageButton
+                                    android:id="@+id/clear_recipient"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:src="@android:drawable/ic_menu_close_clear_cancel"
+                                    android:contentDescription="Очистить" />
+                            </LinearLayout>
+                        </LinearLayout>
+                        
+                        <!-- Комплектует -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginBottom="12dp">
+                            
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Комплектует:"
+                                android:textSize="14sp"
+                                android:textColor="@color/prixodTextSecondary" />
+                            
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="4dp">
+                                
+                                <EditText
+                                    android:id="@+id/filter_assembler"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_weight="1"
+                                    android:background="@drawable/filter_edittext_background"
+                                    android:paddingStart="8dp"
+                                    android:paddingEnd="8dp"
+                                    android:hint="Введите комплектовщика"
+                                    android:textSize="14sp"
+                                    android:singleLine="true"
+                                    android:imeOptions="actionNext"
+                                    android:nextFocusDown="@id/filter_priority" />
+                                
+                                <ImageButton
+                                    android:id="@+id/clear_assembler"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:src="@android:drawable/ic_menu_close_clear_cancel"
+                                    android:contentDescription="Очистить" />
+                            </LinearLayout>
+                        </LinearLayout>
+                        
+                        <!-- Приоритет -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginBottom="12dp">
+                            
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Приоритет:"
+                                android:textSize="14sp"
+                                android:textColor="@color/prixodTextSecondary" />
+                            
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="4dp">
+                                
+                                <Spinner
+                                    android:id="@+id/filter_priority"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_weight="1"
+                                    style="@style/FilterSpinnerStyle"
+                                    android:spinnerMode="dropdown"
+                                    android:popupBackground="@android:color/white"
+                                    android:dropDownVerticalOffset="1dp"
+                                    android:nextFocusDown="@id/filter_receiver" />
+                                
+                                <ImageButton
+                                    android:id="@+id/clear_priority"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:src="@android:drawable/ic_menu_close_clear_cancel"
+                                    android:contentDescription="Очистить" />
+                            </LinearLayout>
+                        </LinearLayout>
+                        
+                        <!-- Получает -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginBottom="24dp">
+                            
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Получает:"
+                                android:textSize="14sp"
+                                android:textColor="@color/prixodTextSecondary" />
+                            
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="4dp">
+                                
+                                <EditText
+                                    android:id="@+id/filter_receiver"
+                                    android:layout_width="0dp"
+                                    android:layout_height="40dp"
+                                    android:layout_weight="1"
+                                    android:background="@drawable/filter_edittext_background"
+                                    android:paddingStart="8dp"
+                                    android:paddingEnd="8dp"
+                                    android:hint="Введите получателя"
+                                    android:textSize="14sp"
+                                    android:singleLine="true"
+                                    android:imeOptions="actionDone" />
+                                
+                                <ImageButton
+                                    android:id="@+id/clear_receiver"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:src="@android:drawable/ic_menu_close_clear_cancel"
+                                    android:contentDescription="Очистить" />
+                            </LinearLayout>
+                        </LinearLayout>
+                        
+                        <!-- Кнопки действий -->
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="36dp">
+                            
+                            <TextView
+                                android:id="@+id/btn_reset_filters"
+                                android:layout_width="match_parent"
+                                android:layout_height="48dp"
+                                android:background="@drawable/reset_button_background"
+                                android:text="СБРОСИТЬ ФИЛЬТРЫ"
+                                android:textColor="@android:color/white"
+                                android:textSize="14sp"
+                                android:textStyle="bold"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:foreground="?android:attr/selectableItemBackground" />
+                        </FrameLayout>
+                        
+                        <!-- Пустое пространство в конце для предотвращения проблем с прокруткой -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="80dp"
+                            android:background="@android:color/white" />
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.core.widget.NestedScrollView>
+        </FrameLayout>
+    </com.google.android.material.navigation.NavigationView>
+</androidx.drawerlayout.widget.DrawerLayout>

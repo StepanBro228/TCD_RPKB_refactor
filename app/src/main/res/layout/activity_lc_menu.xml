@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".LC_menu"
+    android:background="@color/colorBackground">
+
+    <LinearLayout
+        android:layout_width="281dp"
+        android:layout_height="454dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.823">
+
+        <Button
+            android:id="@+id/button_lc_prixod"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginHorizontal="25dp"
+            android:layout_marginTop="40dp"
+            android:backgroundTint="@color/colorPrimary"
+            android:text="Приход"
+            android:textSize="20dp"
+            app:strokeColor="@color/colorPrimaryDark"
+            app:strokeWidth="3dp" />
+
+        <Button
+            android:id="@+id/button_lc_peredacha"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="25dp"
+            android:layout_marginTop="20dp"
+            android:backgroundTint="@color/colorPrimary"
+            android:onClick="goToPeredacha_LVC"
+            android:text="Передача на ЛВК"
+            android:textSize="20dp"
+            app:strokeColor="@color/colorPrimaryDark"
+            app:strokeWidth="3dp" />
+
+        <Button
+            android:id="@+id/button_lc_podborka"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginHorizontal="25dp"
+            android:layout_marginTop="20dp"
+            android:backgroundTint="@color/colorPrimary"
+            android:onClick="goToMoveList"
+            android:text="Подборка"
+            android:textSize="20dp"
+            app:strokeColor="@color/colorPrimaryDark"
+            app:strokeWidth="3dp" />
+        <Button
+            android:id="@+id/button_lc_otgryzka"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:text="Отгрузка"
+            android:textSize="20dp"
+            android:layout_marginHorizontal="25dp"
+            android:layout_marginTop= "20dp"
+            android:backgroundTint="@color/colorPrimary"
+            app:strokeColor="@color/colorPrimaryDark"
+            app:strokeWidth="3dp" />
+        <Button
+            android:id="@+id/button_lc_verification"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:text="Верификация"
+            android:textSize="20dp"
+            android:layout_marginHorizontal="25dp"
+            android:layout_marginTop= "20dp"
+            android:backgroundTint="@color/colorPrimary"
+            app:strokeColor="@color/colorPrimaryDark"
+            app:strokeWidth="3dp" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

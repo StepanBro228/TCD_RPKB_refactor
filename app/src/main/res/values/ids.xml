@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Теги для сохранения состояния фокусируемости -->
+    <item type="id" name="tag_focusable" />
+    <item type="id" name="tag_focusable_touch_mode" />
+</resources> 

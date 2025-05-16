@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="8dp"
+    android:layout_margin="16dp">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="vertical"
+        android:fadeScrollbars="false"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/prixod_item_background"
+            android:padding="16dp">
+
+            <!-- Заголовок -->
+            <TextView
+                android:id="@+id/detail_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Информация о товаре"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/prixodPrimary"
+                android:gravity="center"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- Наименование товара -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="12dp">
+                
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Наименование:"
+                    android:textStyle="bold"
+                    android:textSize="15sp"
+                    android:textColor="@color/prixodPrimaryDark"/>
+                    
+                <TextView
+                    android:id="@+id/detail_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/prixodText"/>
+            </LinearLayout>
+
+            <!-- Единицы измерения -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+                
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Единицы измерения:"
+                        android:textStyle="bold"
+                        android:textSize="15sp"
+                        android:textColor="@color/prixodPrimaryDark"/>
+                        
+                    <TextView
+                        android:id="@+id/detail_mesure"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:layout_marginTop="4dp"
+                        android:textColor="@color/prixodText"/>
+                </LinearLayout>
+                
+
+            </LinearLayout>
+
+            <!-- Количество -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+                
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Количество:"
+                        android:textStyle="bold"
+                        android:textSize="15sp"
+                        android:textColor="@color/prixodPrimaryDark"/>
+                        
+                    <TextView
+                        android:id="@+id/detail_amount"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:layout_marginTop="4dp"
+                        android:textColor="@color/prixodText"/>
+                </LinearLayout>
+                
+
+            </LinearLayout>
+
+            <!-- Цена -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+                
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Цена:"
+                        android:textStyle="bold"
+                        android:textSize="15sp"
+                        android:textColor="@color/prixodPrimaryDark"/>
+                        
+                    <TextView
+                        android:id="@+id/detail_price"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:layout_marginTop="4dp"
+                        android:textColor="@color/prixodAccent"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+                
+
+            </LinearLayout>
+
+            <!-- Внесено -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp">
+                
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Внесено:"
+                        android:textStyle="bold"
+                        android:textSize="15sp"
+                        android:textColor="@color/prixodPrimaryDark"/>
+                    
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="4dp">
+                        
+                        <EditText
+                            android:id="@+id/detail_carried"
+                            style="@style/PrixodEditTextStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:inputType="number"
+                            android:hint="0"
+                            android:importantForAutofill="no"/>
+                    </LinearLayout>
+                </LinearLayout>
+                
+
+            </LinearLayout>
+
+            <!-- Кнопки -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="end">
+                
+                <Button
+                    android:id="@+id/btn_cancel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Отмена"
+                    android:layout_marginEnd="8dp"
+                    android:textSize="14sp"
+                    style="@style/Widget.AppCompat.Button.Borderless.Colored"
+                    android:textColor="@color/prixodPrimaryDark"/>
+                    
+                <Button
+                    android:id="@+id/btn_save"
+                    style="@style/PrixodButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Сохранить"/>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</androidx.cardview.widget.CardView> 

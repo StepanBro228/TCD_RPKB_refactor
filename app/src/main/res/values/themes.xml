@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.TCD_RPKB" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/prixodPrimary</item>
+        <item name="colorPrimaryDark">@color/prixodPrimaryDark</item>
+        <item name="colorAccent">@color/prixodAccent</item>
+        <!-- Background color. -->
+        <item name="android:windowBackground">@color/prixodBackground</item>
+        <!-- Text colors. -->
+        <item name="android:textColorPrimary">@color/prixodText</item>
+        <item name="android:textColorSecondary">@color/prixodTextSecondary</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <!-- Полноэкранный режим -->
+        <item name="android:windowFullscreen">true</item>
+        <!-- Скрытие панели навигации -->
+        <item name="android:windowTranslucentNavigation">true</item>
+        <!-- Ripple effect color -->
+        <item name="colorControlHighlight">@color/prixodAccent</item>
+    </style>
+</resources>

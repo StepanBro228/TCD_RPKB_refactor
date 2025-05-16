@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Размеры для RUGLINE RT41 (480x800, 240dpi) -->
+    <dimen name="rugline_rt41_button_height">48dp</dimen>
+    <dimen name="rugline_rt41_text_size_large">18sp</dimen>
+    <dimen name="rugline_rt41_text_size_medium">16sp</dimen>
+    <dimen name="rugline_rt41_text_size_small">14sp</dimen>
+    <dimen name="rugline_rt41_margin_normal">8dp</dimen>
+    <dimen name="rugline_rt41_margin_small">4dp</dimen>
+    <dimen name="rugline_rt41_padding_normal">8dp</dimen>
+    <dimen name="rugline_rt41_padding_small">4dp</dimen>
+    <dimen name="item_space_height">10dp</dimen>
+    <dimen name="item_side_space">8dp</dimen>
+</resources> 
