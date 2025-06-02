@@ -9,6 +9,6 @@
     <dimen name="rugline_rt41_margin_small">4dp</dimen>
     <dimen name="rugline_rt41_padding_normal">8dp</dimen>
     <dimen name="rugline_rt41_padding_small">4dp</dimen>
-    <dimen name="item_space_height">10dp</dimen>
+    <dimen name="item_space_height">0dp</dimen>
     <dimen name="item_side_space">8dp</dimen>
 </resources> 

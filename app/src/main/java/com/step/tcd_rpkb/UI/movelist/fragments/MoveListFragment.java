@@ -91,15 +91,15 @@ public class MoveListFragment extends Fragment implements MoveAdapter.OnSelectio
     private void observeViewModel() {
         if (STATUS_FORMIROVAN.equals(status)) {
             moveListViewModel.filteredFormirovanList.observe(getViewLifecycleOwner(), newList -> {
+                // Log.d("DEBUG_UPDATE", "[Fragment_" + status + ".observer.filteredFormirovanList] Triggered. List size: " + (newList != null ? newList.size() : "null"));
                 if (newList != null) {
-                    // Log.d("MoveListFragment_" + status, "Received Formirovan List: " + newList.size() + " items");
                     updateAdapterData(newList);
                 }
             });
         } else if (STATUS_KOMPLEKTUETSA.equals(status)) {
             moveListViewModel.filteredKomplektuetsaList.observe(getViewLifecycleOwner(), newList -> {
+                // Log.d("DEBUG_UPDATE", "[Fragment_" + status + ".observer.filteredKomplektuetsaList] Triggered. List size: " + (newList != null ? newList.size() : "null"));
                 if (newList != null) {
-                    // Log.d("MoveListFragment_" + status, "Received Komplektuetsa List: " + newList.size() + " items");
                     updateAdapterData(newList);
                 }
             });
@@ -111,9 +111,14 @@ public class MoveListFragment extends Fragment implements MoveAdapter.OnSelectio
      * @param newList Новый список элементов.
      */
     private void updateAdapterData(List<MoveItem> newList) {
-        if (adapter == null) return;
-        // ListAdapter сам обработает DiffUtil и обновит RecyclerView
-        adapter.submitList(newList); 
+        if (adapter == null) {
+            // Log.d("DEBUG_UPDATE", "[Fragment_" + status + ".updateAdapterData] Adapter is NULL. Cannot submit list.");
+            return;
+        }
+        // Log.d("DEBUG_UPDATE", "[Fragment_" + status + ".updateAdapterData] Submitting list. Size: " + (newList != null ? newList.size() : "null"));
+        adapter.submitList(newList != null ? new ArrayList<>(newList) : new ArrayList<>()); // Передаем копию
+
+        // Log.d("DEBUG_UPDATE", "[Fragment_" + status + ".updateAdapterData] Adapter data submitted. Current adapter item count: " + adapter.getItemCount());
     }
 
     /**

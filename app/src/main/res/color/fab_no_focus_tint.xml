@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Цвет для состояния с фокусом -->
+    <item android:color="@color/prixodPrimary" android:state_focused="true"/>
+    <!-- Цвет для состояния нажатия (опционально, можно оставить таким же) -->
+    <item android:color="@color/prixodPrimary" android:state_pressed="true"/>
+    <!-- Цвет по умолчанию (для всех остальных состояний) -->
+    <item android:color="@color/prixodPrimary"/>
+</selector> 

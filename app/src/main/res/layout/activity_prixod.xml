@@ -6,7 +6,8 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:animateLayoutChanges="true">
+    android:animateLayoutChanges="true"
+    android:defaultFocusHighlightEnabled="false">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/main"
@@ -14,13 +15,16 @@
         android:layout_height="match_parent"
         android:background="@drawable/prixod_background_gradient"
         android:animateLayoutChanges="true"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:defaultFocusHighlightEnabled="false"
         tools:context=".UI.Prixod.PrixodActivity">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_info"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginTop="8dp"
+
             android:layoutAnimation="@anim/layout_animation_slide_right"
             android:clipToPadding="false"
             android:paddingBottom="80dp"
@@ -41,13 +45,13 @@
             android:clickable="true"
             android:contentDescription="Меню"
             android:focusable="true"
-            app:backgroundTint="@color/prixodPrimary"
+            app:backgroundTint="@color/fab_no_focus_tint"
             app:borderWidth="0dp"
             app:elevation="8dp"
             app:fabSize="normal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:rippleColor="@color/prixodAccent"
+            app:rippleColor="@color/fab_ripple_control"
             app:srcCompat="@android:drawable/ic_menu_sort_by_size"
             app:tint="@color/colorWhite" />
 
@@ -65,6 +69,7 @@
             android:background="@drawable/filter_indicator_shape"
             android:visibility="invisible"
             android:elevation="9dp"
+            android:backgroundTint="@android:color/transparent"
             app:layout_constraintBottom_toTopOf="@+id/nav_menu_button"
             app:layout_constraintEnd_toEndOf="@+id/nav_menu_button"
             android:layout_marginEnd="5dp"
@@ -79,7 +84,8 @@
         android:layout_gravity="start"
         android:background="@android:color/transparent"
         android:fitsSystemWindows="false"
-        app:elevation="0dp">
+        app:elevation="0dp"
+        android:defaultFocusHighlightEnabled="false">
         
         <FrameLayout
             android:layout_width="match_parent"
@@ -231,8 +237,7 @@
                                     android:paddingEnd="8dp"
                                     android:hint="Введите название"
                                     android:textSize="14sp"
-                                    android:singleLine="true"
-                                    android:imeOptions="actionNext" />
+                                    android:singleLine="true" />
                                 
                                 <ImageButton
                                     android:id="@+id/clear_name"
@@ -280,8 +285,7 @@
                                         android:hint="От"
                                         android:textSize="14sp"
                                         android:inputType="number"
-                                        android:singleLine="true"
-                                        android:imeOptions="actionNext" />
+                                        android:singleLine="true" />
                                     
                                     <View
                                         android:layout_width="8dp"
@@ -298,8 +302,7 @@
                                         android:hint="До"
                                         android:textSize="14sp"
                                         android:inputType="number"
-                                        android:singleLine="true"
-                                        android:imeOptions="actionNext" />
+                                        android:singleLine="true" />
                                 </LinearLayout>
                                 
                                 <ImageButton

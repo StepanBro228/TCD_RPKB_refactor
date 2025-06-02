@@ -45,7 +45,6 @@ public class MoveDiffCallback extends DiffUtil.ItemCallback<MoveItem> {
         
         // Сравнение состояния CPS, если оно отображается или влияет на UI
         if (oldItem.isCps() != newItem.isCps()) return false;
-        if (oldItem.isCps() != newItem.isCps()) return false;
 
         // Если все проверки пройдены, содержимое одинаково
         return true;

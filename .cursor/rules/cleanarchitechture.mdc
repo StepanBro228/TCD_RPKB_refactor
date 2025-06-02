@@ -1,5 +1,5 @@
 ---
-description: Always read file bebore editing or creating files.
+description: Always read file before editing or creating files.
 globs: 
 alwaysApply: false
 ---

@@ -82,6 +82,12 @@ public class LoginDialogFragment extends DialogFragment {
                .setNegativeButton("Отмена", (dialog, id) -> dialog.cancel());
         
         final AlertDialog dialog = builder.create();
+        if (!viewModel.username.getValue().isEmpty() && viewModel.username.getValue() != null){
+            etUsername.setText((viewModel.username.getValue()));
+        }
+        if (!viewModel.password.getValue().isEmpty() && viewModel.password.getValue() != null){
+            etPassword.setText((viewModel.password.getValue()));
+        }
         setupSaveButton(dialog);
         
         return dialog;

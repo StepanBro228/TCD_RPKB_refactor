@@ -3,4 +3,8 @@
     <!-- Теги для сохранения состояния фокусируемости -->
     <item type="id" name="tag_focusable" />
     <item type="id" name="tag_focusable_touch_mode" />
+    <item type="id" name="tag_recycler_view_position" />
+    <item type="id" name="tag_recycler_view_product_uuid" />
+    <item type="id" name="tag_focus_blocked_by_activity"/>
+    <item type="id" name="priority_chart_root"/>
 </resources> 

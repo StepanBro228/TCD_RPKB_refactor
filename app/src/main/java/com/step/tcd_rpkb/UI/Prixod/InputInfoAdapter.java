@@ -3,6 +3,7 @@ package com.step.tcd_rpkb.UI.Prixod;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,6 +28,7 @@ import java.util.Set;
 
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.animation.ObjectAnimator;
+import android.widget.Toast;
 
 public class InputInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int TYPE_ITEM = 0;
@@ -60,87 +62,6 @@ public class InputInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
     }
 
-    public InputInfoAdapter(List<Product> products, RecyclerView recyclerView, AdapterButtonListener buttonListener, OnProductDataChangedListener dataChangedListener){
-        this.products = new ArrayList<>(products);
-        this.recyclerView = recyclerView;
-        this.buttonListener = buttonListener;
-        this.dataChangedListener = dataChangedListener;
-        
-        // recyclerView.setOnFocusChangeListener и recyclerView.addOnScrollListener удалены,
-        // так как управление фокусом и состоянием прокрутки более не требуется
-        // или управляется из PrixodActivity.java/PrixodViewModel.
-        /*
-        if (recyclerView != null) {
-            recyclerView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                @Override
-                public void onFocusChange(View v, boolean hasFocus) {
-                    if (hasFocus) {
-                        new Handler().postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                for (int i = 0; i < products.size(); i++) {
-                                    RecyclerView.ViewHolder holder = recyclerView.findViewHolderForAdapterPosition(i);
-                                    if (holder instanceof InputinfoViewHolder) {
-                                        InputinfoViewHolder viewHolder = (InputinfoViewHolder) holder;
-                                        if (errorProducts.contains(products.get(i).getNomenclatureUuid())) {
-                                            viewHolder.list_carried.requestFocus();
-                                            viewHolder.list_carried.setSelection(viewHolder.list_carried.getText().length());
-                                            
-                                            viewHolder.list_carried.setEnabled(false);
-                                            viewHolder.list_carried.setEnabled(true);
-                                            return;
-                                        }
-                                    }
-                                }
-                                
-                                if (isProcessingEnterKey) {
-                                    for (int i = 0; i < recyclerView.getChildCount(); i++) {
-                                        View child = recyclerView.getChildAt(i);
-                                        RecyclerView.ViewHolder holder = recyclerView.getChildViewHolder(child);
-                                        if (holder instanceof InputinfoViewHolder) {
-                                            InputinfoViewHolder viewHolder = (InputinfoViewHolder) holder;
-                                            viewHolder.list_carried.requestFocus();
-                                            viewHolder.list_carried.setSelection(viewHolder.list_carried.getText().length());
-                                            return;
-                                        }
-                                    }
-                                }
-                            }
-                        }, 50);
-                    }
-                }
-            });
-            
-            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-                @Override
-                public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                    super.onScrollStateChanged(recyclerView, newState);
-                    
-                    /* // Логика фокусировки на элементе с ошибкой после скролла теперь управляется PrixodActivity.java через ViewModel
-                    if (newState == RecyclerView.SCROLL_STATE_IDLE && isProcessingEnterKey) {
-                        new Handler().postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                for (int i = 0; i < products.size(); i++) {
-                                    if (errorProducts.contains(products.get(i).getNomenclatureUuid())) {
-                                        // requestFocusAt(i); // Метод удален
-                                        return;
-                                    }
-                                }
-                            }
-                        }, 50);
-                    }
-                    * /
-                }
-            });
-            
-            Context context = recyclerView.getContext();
-            if (context instanceof Prixod) {
-                this.prixodActivity = (Prixod) context;
-            }
-        }
-        */
-    }
     
     public void updateData(List<Product> newProducts, Set<String> errorUuids) {
         this.products.clear();
@@ -166,16 +87,16 @@ public class InputInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 if (view instanceof EditText) {
                     final EditText editText = (EditText) view;
                     
-                    new Handler().postDelayed(new Runnable() {
+                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                         @Override
                         public void run() {
                             try {
-                                if (editText.getWindowToken() != null) {
+                                if (editText.getWindowToken() != null && editText.isAttachedToWindow()) {
                                     editText.requestFocus();
                                     editText.setSelection(editText.getText().length());
                                 }
                             } catch (Exception e) {
-                                Log.e("InputInfoAdapter", "Ошибка при восстановлении фокуса", e);
+                                Log.e("InputInfoAdapter", "Ошибка при восстановлении фокуса после анимации", e);
                             }
                         }
                     }, 50);
@@ -192,12 +113,12 @@ public class InputInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         TextView sender_storage;
         TextView cell_balance, series_balance, free_balance, total_balance;
         EditText list_carried;
-        View itemView;
+        View itemViewContainer;
         View seriesStorageContainer;
 
         public InputinfoViewHolder(@NonNull View itemView) {
             super(itemView);
-            this.itemView = itemView;
+            this.itemViewContainer = itemView;
             list_name = itemView.findViewById(R.id.list_name);
             list_series = itemView.findViewById(R.id.list_series);
             sender_storage = itemView.findViewById(R.id.sender_storage);
@@ -211,7 +132,7 @@ public class InputInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             free_balance = itemView.findViewById(R.id.free_balance);
             total_balance = itemView.findViewById(R.id.total_balance);
             
-            list_carried.setBackgroundResource(0);
+            list_carried.setBackgroundResource(R.drawable.edit_text_def);
             
             try {
                 list_carried.setShowSoftInputOnFocus(false);
@@ -290,108 +211,76 @@ public class InputInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
             if (errorUuids != null && errorUuids.contains(product.getNomenclatureUuid())) {
                 list_carried.setBackgroundResource(R.drawable.edit_text_error);
+            } else if (list_carried.hasFocus()){
+                list_carried.setBackgroundResource(R.drawable.edit_text_focused);
             } else {
-                list_carried.setBackgroundResource(R.drawable.edit_text_default);
+                list_carried.setBackgroundResource(R.drawable.edit_text_def);
             }
 
-            itemView.setOnClickListener(null);
-            
             PrixodActivity.disableKeyboardForNumericField(list_carried);
-            
-            list_carried.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-                @Override
-                public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                    if (actionId == EditorInfo.IME_ACTION_DONE || 
-                       (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN)) {
-                        
-                        final Context context = v.getContext();
-                        String valueStr = list_carried.getText().toString();
-                        int carriedValue = 0;
-                        boolean locallyValid = true;
 
-                        if (!valueStr.isEmpty()) {
-                            try {
-                                carriedValue = Integer.parseInt(valueStr);
-                                if (carriedValue < 0) {
-                                    locallyValid = false;
-                                } else if (carriedValue > product.getQuantity()) {
-                                    locallyValid = false;
-                                }
-                            } catch (NumberFormatException e) {
-                                carriedValue = product.getTaken();
-                                locallyValid = false;
-                            }
-                        } else {
-                            carriedValue = 0;
-                        }
-                        
-                        if (dataChangedListener != null) {
-                            dataChangedListener.onProductDataConfirmed(product.getNomenclatureUuid(), carriedValue, getBindingAdapterPosition(), locallyValid, true);
-                        }
-
-                            InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-                            if (imm != null) {
-                                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
-                            }
-                            
-                        return true;
-                    }
-                    return false;
-                }
-            });
 
             list_carried.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override
                 public void onFocusChange(View v, boolean hasFocus) {
-                    if (!hasFocus) {
-                        Context context = v.getContext();
-                        InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-                        if (imm != null) {
-                            imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
-                        }
-                        
-                        String valueStr = list_carried.getText().toString();
-                        int carriedValue = 0;
-                        boolean locallyValid = true;
+                    int carriedValueIfValid = 0;
+                    String valueStr = list_carried.getText().toString();
+                    boolean locallyValid = true;
 
-                        if (!valueStr.isEmpty()) {
-                           try {
-                                carriedValue = Integer.parseInt(valueStr);
-                                if (carriedValue < 0) {
-                                    locallyValid = false;
-                                } else if (carriedValue > product.getQuantity()) {
-                                    locallyValid = false;
-                                    }
-                            } catch (NumberFormatException e) {
-                                carriedValue = product.getTaken();
+                    if (!valueStr.isEmpty()) {
+                        try {
+                            carriedValueIfValid = Integer.parseInt(valueStr);
+                            if (carriedValueIfValid < 0 || carriedValueIfValid > product.getQuantity()) {
                                 locallyValid = false;
                             }
-                        } else {
-                            carriedValue = 0;
-                        }
-                        
-                        if (dataChangedListener != null) {
-                            dataChangedListener.onProductDataConfirmed(product.getNomenclatureUuid(), carriedValue, getBindingAdapterPosition(), locallyValid, false);
+                        } catch (NumberFormatException e) {
+                            locallyValid = false; 
                         }
                     } else {
-                        String value = list_carried.getText().toString();
-                        if (!value.equals("0") && !value.isEmpty()) {
-                            list_carried.setSelection(value.length());
+                        carriedValueIfValid = 0; // Пустое поле - это 0
+                    }
+                    
+                    // Обновляем product.taken только если ввод был валиден при потере фокуса
+                    // или если поле осталось пустым (что эквивалентно 0)
+                    if (locallyValid) {
+                        product.setTaken(carriedValueIfValid);
+                    }
+
+                    if (hasFocus) {
+                        // При получении фокуса: устанавливаем фон в зависимости от наличия ошибки ИЛИ состояния фокуса
+                        if (currentErrorUuids != null && currentErrorUuids.contains(product.getNomenclatureUuid())) {
+                             list_carried.setBackgroundResource(R.drawable.edit_text_error);
                         } else {
-                            list_carried.setText("");
+                            list_carried.setBackgroundResource(R.drawable.edit_text_focused);
                         }
-                        list_carried.setBackgroundResource(R.drawable.edit_text_focused);
+                        
+                        String currentValue = list_carried.getText().toString();
+                        // Устанавливаем курсор в конец, только если есть текст и это не "0"
+                        // Для "0" или пустого поля, текст очищается для удобства ввода нового числа
+                        if (!currentValue.equals("0") && !currentValue.isEmpty()) {
+                            list_carried.setSelection(currentValue.length());
+                        } else {
+                            list_carried.setText(""); 
+                        }
                         
                         PrixodActivity.disableKeyboardForNumericField(list_carried);
                         
-                        new Handler().post(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (list_carried.hasFocus() && list_carried.getText().length() > 0) {
-                                    list_carried.setSelection(list_carried.getText().length());
-                                }
-                            }
-                        });
+
+
+                    } else { // Потеря фокуса
+                        // При потере фокуса: валидируем, обновляем product.taken (если валидно), сообщаем ViewModel
+                        if (!locallyValid) {
+                            // Если НЕ валидно, показываем ошибку. product.taken НЕ обновляется невалидным значением.
+                            shakeView(list_carried);
+                            list_carried.setBackgroundResource(R.drawable.edit_text_error);
+                            Toast.makeText(v.getContext(), "Введено некорректное значение", Toast.LENGTH_SHORT).show();
+
+                        } else {
+                            // Если валидно (или поле пустое), сбрасываем фон на обычный
+                            list_carried.setBackgroundResource(R.drawable.edit_text_def);
+                        }
+                        
+
                     }
                 }
             });
@@ -415,8 +304,8 @@ public class InputInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                     try {
                         if (buttonListener != null) {
                             buttonListener.onSendDataClicked();
-                                            }
-                                    } catch (Exception e) {
+                        }
+                    } catch (Exception e) {
                         Log.e("InputInfoAdapter", "Ошибка при вызове onSendDataClicked: " + e.getMessage());
                     }
                 }
@@ -427,8 +316,8 @@ public class InputInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 public void onClick(View v) {
                     if (buttonListener != null) {
                         buttonListener.onGoBackClicked();
-                                    }
-                            }
+                    }
+                }
             });
         }
     }
@@ -436,7 +325,6 @@ public class InputInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public int getItemViewType(int position) {
         if (position == products.size()){return TYPE_BUTTON;}
         else{return TYPE_ITEM;}
-
     }
 
     @NonNull
@@ -449,7 +337,6 @@ public class InputInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.inputinformation_list_button, parent, false);
             return new InputinfoButtonViewHolder(view);
         }
-
     }
 
     @Override
@@ -458,7 +345,7 @@ public class InputInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             if (products != null && position < products.size()) {
                 Product product = products.get(position);
                 ((InputinfoViewHolder) holder).bind(product, currentErrorUuids);
-    }
+            }
         } else if (holder.getItemViewType() == TYPE_BUTTON) {
             ((InputinfoButtonViewHolder) holder).bind();
         }
@@ -466,6 +353,6 @@ public class InputInfoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public int getItemCount() {
-        return  products.size() + 1;
+        return  (products != null ? products.size() : 0) + 1;
     }
 }

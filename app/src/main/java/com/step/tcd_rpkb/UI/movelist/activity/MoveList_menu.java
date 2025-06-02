@@ -3,6 +3,7 @@ package com.step.tcd_rpkb.UI.movelist.activity;
 import static com.step.tcd_rpkb.UI.movelist.viewmodel.MoveListViewModel.STATUS_FORMIROVAN;
 import static com.step.tcd_rpkb.UI.movelist.viewmodel.MoveListViewModel.STATUS_KOMPLEKTUETSA;
 
+import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -18,6 +19,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.animation.OvershootInterpolator;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -45,6 +47,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.snackbar.Snackbar; // << ДОБАВЛЕН ИМПОРТ
 import com.step.tcd_rpkb.UI.Prixod.PrixodActivity;
 import com.step.tcd_rpkb.domain.model.MoveItem;
 import com.step.tcd_rpkb.domain.model.User; // Добавляем импорт User
@@ -138,6 +141,7 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
     private Button btnMoveToWork;
     private Button btnMoveFromWork;
     private Button btnCancelSelection;
+    // private Button btnUndoMove; // << УДАЛЕНО
     
     // Флаг, определяющий режим выбора элементов
     private boolean isSelectionMode = false;
@@ -147,12 +151,16 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
     // Для фоновых операций
 
 
-    // Индикатор загрузки
-    private com.step.tcd_rpkb.utils.LoadingDialog loadingDialog;
+    private com.step.tcd_rpkb.utils.LoadingDialog loadingDialog; // Возвращаем кастомный диалог
+    // private AlertDialog alertDialog; // Убираем поле для AlertDialog
     
     // Счетчик активных загрузок для корректного управления диалогом загрузки
     private int activeLoadingCount = 0;
     private final Object loadingLock = new Object();
+
+    // Флаги для управления первым обновлением диаграммы
+    private boolean formirovanDataReadyForChart = false;
+    private boolean komplektuetsaDataReadyForChart = false;
 
     /**
      * Возвращает текущую позицию вкладки
@@ -171,6 +179,8 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
         
         // Инициализация ViewModel через Hilt
         moveListViewModel = new ViewModelProvider(this).get(MoveListViewModel.class);
+        
+
         
         loadingDialog = new com.step.tcd_rpkb.utils.LoadingDialog(this);
         
@@ -197,26 +207,13 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
                 View focusedView = getCurrentFocus();
                 if (focusedView instanceof EditText) {
                     // Задержка необходима, чтобы анимация открытия клавиатуры завершилась
-                    focusedView.postDelayed(() -> scrollToView(focusedView), 300);
+                    // focusedView.postDelayed(() -> scrollToView(focusedView), 300);
+                    scrollToView(focusedView); // Вызываем напрямую
                 }
             }
         });
         
-        // Инициализация глобального обработчика нажатий для контроля клавиатуры
-        getWindow().getDecorView().setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                // Если нажата клавиша Back и боковое меню открыто
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
-                    if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                        // Убираем фокус и клавиатуру перед закрытием
-                        clearFocus();
-                        hideKeyboard();
-                    }
-                }
-                return false;
-            }
-        });
+
         
         // Инициализация основных компонентов UI
         drawerLayout = findViewById(R.id.drawer_layout);
@@ -266,17 +263,6 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
         // Настройка навигационной шторки
         setupNavigationView();
         
-        // Скрытие клавиатуры при нажатии вне поля ввода
-        setupTouchListener();
-        
-        // Добавляем обработчик для основного контейнера, чтобы закрывать боковое меню и клавиатуру
-        findViewById(R.id.main).setOnClickListener(v -> {
-            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                drawerLayout.closeDrawer(GravityCompat.START);
-                hideKeyboard();
-                clearFocus();
-            }
-        });
         
         // Инициализация новых сегментов
         segmentFormirovano = findViewById(R.id.segment_formirovano);
@@ -302,6 +288,8 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
         // Предотвращение появления клавиатуры при закрытии шторки
         preventKeyboardShowOnDrawerClose();
         
+        // Инициализируем слушатель для NestedScrollView в NavigationView
+        setupFilterScrollViewTouchListener(); // Добавляем вызов нового метода
         
         // Подписываемся на LiveData из ViewModel для обновления UI фильтров при их изменении
         observeFilterViewModel();
@@ -318,12 +306,17 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
             filterMovementNumber.setFocusable(true);
             filterMovementNumber.setFocusableInTouchMode(true);
             filterMovementNumber.setClickable(true);
+            filterMovementNumber.setShowSoftInputOnFocus(false); // Убедимся, что флаг установлен
             
             // Добавляем возможность запрашивать фокус по клику
             filterMovementNumber.setOnClickListener(v -> {
                 v.requestFocus();
-                // Отключаем клавиатуру
-                disableKeyboardForNumericField(filterMovementNumber);
+                // setShowSoftInputOnFocus(false) должен предотвратить появление клавиатуры.
+                // В качестве дополнительной меры явно скрываем клавиатуру.
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (v.getWindowToken() != null) { // Проверяем токен перед использованием
+                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                }
             });
         }
         
@@ -336,25 +329,52 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
         // Инициализируем кнопку обновления (изначально скрыта)
         setupRefreshButton();
         
-        // Загружаем данные после завершения инициализации UI
-        // Добавляем небольшую задержку для корректного отображения индикатора загрузки
-        new Handler().postDelayed(() -> {
-            // Загружаем данные из JSON и обновляем фрагменты
-
-            moveListViewModel.loadMoveData(); // Загружаем данные через ViewModel
-        }, 150); // 150 мс задержка
-
         // Подписываемся на LiveData из ViewModel
         observeViewModel();
+            // Загружаем данные из JSON и обновляем фрагменты
+        // Убираем задержку, чтобы данные загружались как можно скорее
+            moveListViewModel.loadMoveData(); // Загружаем данные через ViewModel
+
+
+
     }
 
     private void observeViewModel() {
         // Наблюдение за состоянием загрузки
         moveListViewModel.isLoading.observe(this, isLoading -> {
+            Log.d("MoveList_menu", "isLoading LiveData changed: " + isLoading);
             if (isLoading) {
+                Log.d("MoveList_menu", "isLoading is TRUE. Posting runnable to show dialog.");
+                getWindow().getDecorView().post(() -> {
+                    Log.d("MoveList_menu", "Runnable in post() for show is executing.");
+                    // Показываем, только если isLoading ВСЕ ЕЩЕ true к моменту выполнения Runnable
+                    if (moveListViewModel.isLoading.getValue() == Boolean.TRUE) {
+                        if (loadingDialog == null) {
+                            loadingDialog = new com.step.tcd_rpkb.utils.LoadingDialog(MoveList_menu.this);
+                            Log.d("MoveList_menu", "Custom LoadingDialog created via post.");
+                        }
+                        if (loadingDialog != null && !loadingDialog.isShowing()) {
                 loadingDialog.show();
+                            Log.d("MoveList_menu", "Custom LoadingDialog.show() called via post.");
                 } else {
+                            Log.d("MoveList_menu", "Custom LoadingDialog already showing or null (checked via post).");
+                        }
+                    } else {
+                        Log.d("MoveList_menu", "Runnable for show executed, but isLoading is now false. Dialog not shown.");
+                    }
+                });
+            } else {
+                Log.d("MoveList_menu", "isLoading is FALSE. Posting runnable to hide dialog.");
+                // Скрытие тоже можно обернуть в post для консистентности
+                getWindow().getDecorView().post(() -> {
+                    Log.d("MoveList_menu", "Runnable in post() for dismiss is executing.");
+                    if (loadingDialog != null && loadingDialog.isShowing()) {
+                        Log.d("MoveList_menu", "Dismissing custom LoadingDialog via post.");
                 loadingDialog.dismiss();
+                    } else {
+                        Log.d("MoveList_menu", "Custom LoadingDialog was not showing or null when dismiss (via post) was called.");
+                    }
+                });
             }
         });
 
@@ -372,17 +392,63 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
         // Фрагменты будут наблюдать за filteredFormirovanList и filteredKomplektuetsaList
         moveListViewModel.originalFormirovanList.observe(this, list -> {
             Log.d("MoveList_menu", "Original Formirovan list updated in ViewModel, size: " + (list != null ? list.size() : 0));
-            // applyFiltersToFragment(); // Устарело, логика фильтрации теперь в ViewModel
-            // Обновление UI, если нужно напрямую реагировать на изменение оригинального списка
-            // Например, если какая-то общая статистика считается по оригинальному списку
-            updateFragmentsAfterMoving(); // Обновляем статистику и UI после загрузки/обновления данных
-
+            formirovanDataReadyForChart = true; // Данные загружены
+            // Попытка обновить диаграмму здесь, если это текущая вкладка
+            if (getCurrentTabPosition() == 0) {
+                List<MoveItem> currentFilteredList = moveListViewModel.filteredFormirovanList.getValue();
+                if (currentFilteredList != null) {
+                    Log.d("MoveList_menu", "Original Formirovan loaded, forcing chart update for tab 0. Size: " + currentFilteredList.size());
+                    updatePriorityBarChart(new ArrayList<>(currentFilteredList));
+                } else {
+                    updatePriorityBarChart(new ArrayList<>()); // или не обновлять, если список null
+                }
+            }
+            updateFragmentsAfterMoving(); 
         });
 
         moveListViewModel.originalKomplektuetsaList.observe(this, list -> {
             Log.d("MoveList_menu", "Original Komplektuetsa list updated in ViewModel, size: " + (list != null ? list.size() : 0));
-            // applyFiltersToFragment(); // Устарело
-            updateFragmentsAfterMoving(); // Обновляем статистику и UI после загрузки/обновления данных
+            komplektuetsaDataReadyForChart = true; // Данные загружены
+            // Попытка обновить диаграмму здесь, если это текущая вкладка
+            if (getCurrentTabPosition() == 1) {
+                List<MoveItem> currentFilteredList = moveListViewModel.filteredKomplektuetsaList.getValue();
+                if (currentFilteredList != null) {
+                    Log.d("MoveList_menu", "Original Komplektuetsa loaded, forcing chart update for tab 1. Size: " + currentFilteredList.size());
+                    updatePriorityBarChart(new ArrayList<>(currentFilteredList));
+                } else {
+                     updatePriorityBarChart(new ArrayList<>()); // или не обновлять, если список null
+                }
+            }
+            updateFragmentsAfterMoving(); 
+        });
+        
+        // Наблюдение за отфильтрованными списками для обновления диаграммы приоритетов
+        moveListViewModel.filteredFormirovanList.observe(this, list -> {
+            // Log.d("DEBUG_UPDATE", "[MoveList_menu.observer.filteredFormirovanList] Triggered. Current Tab: " + getCurrentTabPosition() + ". List size: " + (list != null ? list.size() : "null"));
+            // Обновляем диаграмму, только если основные данные уже были загружены для этой вкладки
+            if (getCurrentTabPosition() == 0 && formirovanDataReadyForChart && list != null) {
+                // Log.d("DEBUG_UPDATE", "[MoveList_menu.observer.filteredFormirovanList] Updating priority chart for Formirovan. Size: " + list.size());
+                updatePriorityBarChart(new ArrayList<>(list)); // Передаем копию
+            } else if (getCurrentTabPosition() == 0 && formirovanDataReadyForChart && list == null) {
+                // Log.d("DEBUG_UPDATE", "[MoveList_menu.observer.filteredFormirovanList] Updating priority chart for Formirovan with EMPTY list (source was null).");
+                updatePriorityBarChart(new ArrayList<>()); // Пустая диаграмма, если список стал null после загрузки
+            // } else {
+                 // Log.d("DEBUG_UPDATE", "[MoveList_menu.observer.filteredFormirovanList] SKIPPING chart update. Tab: " + getCurrentTabPosition() + " formirovanDataReady: " + formirovanDataReadyForChart + " list is null: " + (list == null));
+            }
+        });
+
+        moveListViewModel.filteredKomplektuetsaList.observe(this, list -> {
+            // Log.d("DEBUG_UPDATE", "[MoveList_menu.observer.filteredKomplektuetsaList] Triggered. Current Tab: " + getCurrentTabPosition() + ". List size: " + (list != null ? list.size() : "null"));
+            // Обновляем диаграмму, только если основные данные уже были загружены для этой вкладки
+            if (getCurrentTabPosition() == 1 && komplektuetsaDataReadyForChart && list != null) {
+                // Log.d("DEBUG_UPDATE", "[MoveList_menu.observer.filteredKomplektuetsaList] Updating priority chart for Komplektuetsa. Size: " + list.size());
+                updatePriorityBarChart(new ArrayList<>(list)); // Передаем копию
+            } else if (getCurrentTabPosition() == 1 && komplektuetsaDataReadyForChart && list == null) {
+                // Log.d("DEBUG_UPDATE", "[MoveList_menu.observer.filteredKomplektuetsaList] Updating priority chart for Komplektuetsa with EMPTY list (source was null).");
+                 updatePriorityBarChart(new ArrayList<>()); // Пустая диаграмма, если список стал null после загрузки
+            // } else {
+                // Log.d("DEBUG_UPDATE", "[MoveList_menu.observer.filteredKomplektuetsaList] SKIPPING chart update. Tab: " + getCurrentTabPosition() + " komplektuetsaDataReady: " + komplektuetsaDataReadyForChart + " list is null: " + (list == null));
+            }
         });
         
         // Наблюдение за необходимостью показать/скрыть кнопку обновления
@@ -435,6 +501,33 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
             }
         });
         
+        // Наблюдатель для Snackbar с возможностью отмены
+        moveListViewModel.showUndoSnackbarEvent.observe(this, (SingleEvent<MoveListViewModel.SnackbarEvent> event) -> {
+            if (event != null) {
+                MoveListViewModel.SnackbarEvent snackbarEvent = event.getContentIfNotHandled();
+                if (snackbarEvent != null) {
+                    View rootView = findViewById(android.R.id.content); // Или ваш корневой элемент макета, например R.id.drawer_layout
+                    if (rootView == null) rootView = getWindow().getDecorView().findViewById(android.R.id.content);
+                    if (rootView == null) rootView = drawerLayout; // Fallback to drawerLayout if others are null
+                    
+                    if (rootView != null) {
+                        Snackbar snackbar = Snackbar.make(rootView, snackbarEvent.message, Snackbar.LENGTH_LONG);
+                        if (snackbarEvent.showUndoAction) {
+                            snackbar.setAction("Отменить", v -> {
+                                moveListViewModel.undoMove();
+                            });
+                            // Можно установить цвет кнопки "Отменить", если требуется
+                            // snackbar.setActionTextColor(ContextCompat.getColor(this, R.color.your_undo_action_color));
+                        }
+                        snackbar.show();
+                    } else {
+                        // Fallback to Toast if no suitable view found for Snackbar
+                        Toast.makeText(MoveList_menu.this, snackbarEvent.message, Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+        });
+        
         moveListViewModel.isProcessingItemClick.observe(this, isProcessing -> {
             if (isProcessing != null) {
                 if (isProcessing) {
@@ -444,7 +537,16 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
             }
         }
         });
+        
+        // Наблюдатель для возможности отмены
+        // moveListViewModel.undoAvailable.observe(this, isUndoAvailable -> {
+        //     if (btnUndoMove != null) {
+        //         btnUndoMove.setVisibility(isUndoAvailable != null && isUndoAvailable ? View.VISIBLE : View.GONE);
+        //     }
+        // });
     }
+
+
 
     private void observeFilterViewModel() {
         // Обновляем UI фильтров при изменении соответствующего LiveData в ViewModel
@@ -457,28 +559,108 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
         });
 
         // Для вкладки "Сформирован"
-        moveListViewModel.formirovanSenderFilter.observe(this, value -> { if (getCurrentTabPosition() == 0) filterSender.setText(value); });
-        moveListViewModel.formirovanMovementNumberFilter.observe(this, value -> { if (getCurrentTabPosition() == 0) filterMovementNumber.setText(value); });
-        moveListViewModel.formirovanRecipientFilter.observe(this, value -> { if (getCurrentTabPosition() == 0) filterRecipient.setText(value); });
-        moveListViewModel.formirovanAssemblerFilter.observe(this, value -> { if (getCurrentTabPosition() == 0) filterAssembler.setText(value); });
-        moveListViewModel.formirovanReceiverFilter.observe(this, value -> { if (getCurrentTabPosition() == 0) filterReceiver.setText(value); });
+        moveListViewModel.formirovanSenderFilter.observe(this, value -> {
+            if (filterSender != null && getCurrentTabPosition() == 0) {
+                String currentValue = filterSender.getText().toString();
+                String newValue = (value == null) ? "" : value;
+                if (!currentValue.equals(newValue)) {
+                    filterSender.setText(newValue);
+                }
+            }
+        });
+        moveListViewModel.formirovanMovementNumberFilter.observe(this, value -> {
+            if (filterMovementNumber != null && getCurrentTabPosition() == 0) {
+                String currentValue = filterMovementNumber.getText().toString();
+                String newValue = (value == null) ? "" : value;
+                if (!currentValue.equals(newValue)) {
+                    filterMovementNumber.setText(newValue);
+                }
+            }
+        });
+        moveListViewModel.formirovanRecipientFilter.observe(this, value -> {
+            if (filterRecipient != null && getCurrentTabPosition() == 0) {
+                String currentValue = filterRecipient.getText().toString();
+                String newValue = (value == null) ? "" : value;
+                if (!currentValue.equals(newValue)) {
+                    filterRecipient.setText(newValue);
+                }
+            }
+        });
+        moveListViewModel.formirovanAssemblerFilter.observe(this, value -> {
+            if (filterAssembler != null && getCurrentTabPosition() == 0) {
+                String currentValue = filterAssembler.getText().toString();
+                String newValue = (value == null) ? "" : value;
+                if (!currentValue.equals(newValue)) {
+                    filterAssembler.setText(newValue);
+                }
+            }
+        });
+        moveListViewModel.formirovanReceiverFilter.observe(this, value -> {
+            if (filterReceiver != null && getCurrentTabPosition() == 0) {
+                String currentValue = filterReceiver.getText().toString();
+                String newValue = (value == null) ? "" : value;
+                if (!currentValue.equals(newValue)) {
+                    filterReceiver.setText(newValue);
+                }
+            }
+        });
         moveListViewModel.formirovanPriorityFilter.observe(this, value -> {
             if (getCurrentTabPosition() == 0) setSpinnerSelection(filterPriority, value);
         });
-        moveListViewModel.formirovanCpsChecked.observe(this, value -> { if (getCurrentTabPosition() == 0 && value != null) filterCps.setChecked(value); });
-        moveListViewModel.formirovanAvailabilityChecked.observe(this, value -> { if (getCurrentTabPosition() == 0 && value != null) filterAvailability.setChecked(value); });
+        moveListViewModel.formirovanCpsChecked.observe(this, value -> { if (getCurrentTabPosition() == 0 && value != null && filterCps != null && filterCps.isChecked() != value) filterCps.setChecked(value); });
+        moveListViewModel.formirovanAvailabilityChecked.observe(this, value -> { if (getCurrentTabPosition() == 0 && value != null && filterAvailability != null && filterAvailability.isChecked() != value) filterAvailability.setChecked(value); });
 
         // Для вкладки "Комплектуется"
-        moveListViewModel.komplektuetsaSenderFilter.observe(this, value -> { if (getCurrentTabPosition() == 1) filterSender.setText(value); });
-        moveListViewModel.komplektuetsaMovementNumberFilter.observe(this, value -> { if (getCurrentTabPosition() == 1) filterMovementNumber.setText(value); });
-        moveListViewModel.komplektuetsaRecipientFilter.observe(this, value -> { if (getCurrentTabPosition() == 1) filterRecipient.setText(value); });
-        moveListViewModel.komplektuetsaAssemblerFilter.observe(this, value -> { if (getCurrentTabPosition() == 1) filterAssembler.setText(value); });
-        moveListViewModel.komplektuetsaReceiverFilter.observe(this, value -> { if (getCurrentTabPosition() == 1) filterReceiver.setText(value); });
+        moveListViewModel.komplektuetsaSenderFilter.observe(this, value -> {
+            if (filterSender != null && getCurrentTabPosition() == 1) {
+                String currentValue = filterSender.getText().toString();
+                String newValue = (value == null) ? "" : value;
+                if (!currentValue.equals(newValue)) {
+                    filterSender.setText(newValue);
+                }
+            }
+        });
+        moveListViewModel.komplektuetsaMovementNumberFilter.observe(this, value -> {
+            if (filterMovementNumber != null && getCurrentTabPosition() == 1) {
+                String currentValue = filterMovementNumber.getText().toString();
+                String newValue = (value == null) ? "" : value;
+                if (!currentValue.equals(newValue)) {
+                    filterMovementNumber.setText(newValue);
+                }
+            }
+        });
+        moveListViewModel.komplektuetsaRecipientFilter.observe(this, value -> {
+            if (filterRecipient != null && getCurrentTabPosition() == 1) {
+                String currentValue = filterRecipient.getText().toString();
+                String newValue = (value == null) ? "" : value;
+                if (!currentValue.equals(newValue)) {
+                    filterRecipient.setText(newValue);
+                }
+            }
+        });
+        moveListViewModel.komplektuetsaAssemblerFilter.observe(this, value -> {
+            if (filterAssembler != null && getCurrentTabPosition() == 1) {
+                String currentValue = filterAssembler.getText().toString();
+                String newValue = (value == null) ? "" : value;
+                if (!currentValue.equals(newValue)) {
+                    filterAssembler.setText(newValue);
+                }
+            }
+        });
+        moveListViewModel.komplektuetsaReceiverFilter.observe(this, value -> {
+            if (filterReceiver != null && getCurrentTabPosition() == 1) {
+                String currentValue = filterReceiver.getText().toString();
+                String newValue = (value == null) ? "" : value;
+                if (!currentValue.equals(newValue)) {
+                    filterReceiver.setText(newValue);
+                }
+            }
+        });
         moveListViewModel.komplektuetsaPriorityFilter.observe(this, value -> {
             if (getCurrentTabPosition() == 1) setSpinnerSelection(filterPriority, value);
         });
-        moveListViewModel.komplektuetsaCpsChecked.observe(this, value -> { if (getCurrentTabPosition() == 1 && value != null) filterCps.setChecked(value); });
-        moveListViewModel.komplektuetsaAvailabilityChecked.observe(this, value -> { if (getCurrentTabPosition() == 1 && value != null) filterAvailability.setChecked(value); });
+        moveListViewModel.komplektuetsaCpsChecked.observe(this, value -> { if (getCurrentTabPosition() == 1 && value != null && filterCps != null && filterCps.isChecked() != value) filterCps.setChecked(value); });
+        moveListViewModel.komplektuetsaAvailabilityChecked.observe(this, value -> { if (getCurrentTabPosition() == 1 && value != null && filterAvailability != null && filterAvailability.isChecked() != value) filterAvailability.setChecked(value); });
     }
 
     private void setSpinnerSelection(Spinner spinner, String value) {
@@ -824,10 +1006,14 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
     protected void onResume() {
         super.onResume();
         Log.d("MoveList_menu", "onResume called");
+
+        // Убираем тестовый AlertDialog из onResume
+        // if (alertDialog == null) { ... }
+        // if (!alertDialog.isShowing()) { ... }
         
         // Закрываем диалог загрузки на всякий случай, 
         // если он остался открытым из-за какой-то ошибки
-        loadingDialog.dismiss();
+        // loadingDialog.dismiss(); // ВРЕМЕННО КОММЕНТИРУЕМ
         
 
         // Вместо логики выше, просто обновляем индикатор, т.к. ViewModel сама управляет состоянием фильтров.
@@ -843,42 +1029,44 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
      * @param editText поле ввода, для которого настраивается слушатель
      */
     private void setupEnterKeyListener(EditText editText) {
-        editText.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_DONE || 
-                actionId == EditorInfo.IME_ACTION_SEARCH ||
-                (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN)) {
-                
-                // По порядку: 1. Очищаем фокус, 2. Скрываем клавиатуру, 3. Закрываем drawer
-                clearFocus();
-                hideKeyboard();
-                
-                // Предотвращаем установку фокуса на корневой элемент при закрытии NavigationView
-                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                    // Получаем ссылку на корневой элемент
-                    View rootView = getWindow().getDecorView().getRootView();
-                    
-                    // Устанавливаем временный слушатель закрытия NavigationView
-                    drawerLayout.addDrawerListener(new DrawerLayout.SimpleDrawerListener() {
-                        @Override
-                        public void onDrawerClosed(View drawerView) {
-                            // Убираем фокус со всех элементов после закрытия
-                            rootView.clearFocus();
-                            
-                            // Важно: удаляем этот слушатель, чтобы избежать утечек памяти
-                            drawerLayout.removeDrawerListener(this);
-                        }
-                    });
-                    
-                    // Закрываем NavigationView
+        if (editText == null) return;
+
+        editText.setOnKeyListener((v, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN) {
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null && v.getWindowToken() != null) {
+                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                }
+                v.clearFocus(); 
+
+                if (drawerLayout != null) {
+                    drawerLayout.requestFocus(); // Немедленно передаем фокус DrawerLayout
                     drawerLayout.closeDrawer(GravityCompat.START);
                 }
                 
-                // Устанавливаем focusable=false для всех дочерних элементов в иерархии
-                // чтобы предотвратить непреднамеренный захват фокуса
-                ViewGroup rootView = (ViewGroup) getWindow().getDecorView().getRootView();
-                clearFocusableRecursively(rootView);
+                return true; 
+            }
+            return false; 
+        });
+
+        editText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE || 
+                actionId == EditorInfo.IME_ACTION_SEARCH ||
+                actionId == EditorInfo.IME_ACTION_GO ||
+                actionId == EditorInfo.IME_ACTION_NEXT || 
+                (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN)) {
                 
-                return true; // Сообщаем, что событие полностью обработано
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null && v.getWindowToken() != null) {
+                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                }
+                v.clearFocus(); 
+
+                if (drawerLayout != null) {
+                    drawerLayout.requestFocus(); // Немедленно передаем фокус DrawerLayout
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                }
+                return true; 
             }
             return false;
         });
@@ -952,8 +1140,13 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
                 if (newFocus == filterMovementNumber) {
                     // Если фокус перешёл на поле "Номер перемещения", скрываем клавиатуру
                     // но НЕ убираем фокус с поля
+                    if(filterMovementNumber != null) {
+                        filterMovementNumber.setShowSoftInputOnFocus(false); // Перестраховка
+                    }
                     InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (newFocus.getWindowToken() != null) { // Проверяем токен
                     imm.hideSoftInputFromWindow(newFocus.getWindowToken(), 0);
+                    }
                 } else if (oldFocus == filterMovementNumber && newFocus instanceof EditText) {
                     // Если фокус ушёл с поля "Номер перемещения" на другое текстовое поле,
                     // то клавиатура будет показана через обработчик onFocusChange
@@ -973,15 +1166,43 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
                 return;
             }
             
-            // Находим и очищаем контейнер
             LinearLayout statsContainer = findViewById(R.id.priority_stats_layout);
             if (statsContainer == null) {
                 Log.e("MoveList_menu", "updatePriorityBarChart: контейнер не найден");
                 return;
             }
             
-            // Очищаем существующие элементы
-            statsContainer.removeAllViews();
+            View chartView;
+            // Проверяем, есть ли уже chartView в контейнере
+            if (statsContainer.getChildCount() > 0 && statsContainer.getChildAt(0).getId() == R.id.priority_chart_root) {
+                chartView = statsContainer.getChildAt(0);
+                // Log.d("MoveList_menu", "updatePriorityBarChart: chartView найден, обновляем существующий.");
+            } else {
+                // Log.d("MoveList_menu", "updatePriorityBarChart: chartView не найден, создаем новый.");
+                statsContainer.removeAllViews(); // Очищаем, если там что-то другое было
+                chartView = getLayoutInflater().inflate(R.layout.priority_bar_chart, statsContainer, false);
+                chartView.setId(R.id.priority_chart_root); // Устанавливаем ID для корневого элемента диаграммы
+                statsContainer.addView(chartView);
+            }
+            
+            // Находим все секции и тексты с количеством
+            FrameLayout urgentSection = chartView.findViewById(R.id.urgent_section);
+            FrameLayout highSection = chartView.findViewById(R.id.high_section);
+            FrameLayout mediumSection = chartView.findViewById(R.id.medium_section);
+            FrameLayout lowSection = chartView.findViewById(R.id.low_section);
+            
+            TextView urgentText = chartView.findViewById(R.id.urgent_count);
+            TextView highText = chartView.findViewById(R.id.high_count);
+            TextView mediumText = chartView.findViewById(R.id.medium_count);
+            TextView lowText = chartView.findViewById(R.id.low_count);
+            TextView totalText = chartView.findViewById(R.id.total_badge);
+            
+            // Используем те же цвета, что и в RecyclerView (MoveAdapter)
+            // Важно: точные цвета из MoveAdapter.setPriorityColor
+            urgentSection.setBackgroundColor(Color.parseColor("#8B0000")); // Неотложный (бордовый/темно-красный)
+            highSection.setBackgroundColor(Color.parseColor("#FF6347")); // Высокий (красный ближе к оранжевому)
+            mediumSection.setBackgroundColor(Color.YELLOW); // Средний (желтый)
+            lowSection.setBackgroundColor(Color.GREEN); // Низкий/Без приоритета (зеленый)
             
             // Подсчитываем количества по приоритетам
             int urgentCount = 0, highCount = 0, mediumCount = 0, lowCount = 0, noPriorityCount = 0;
@@ -1003,28 +1224,6 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
             
             // Общее количество элементов
             int totalCount = items.size();
-            
-            // Создаем новую диаграмму
-            View chartView = getLayoutInflater().inflate(R.layout.priority_bar_chart, statsContainer, false);
-            
-            // Находим все секции и тексты с количеством
-            FrameLayout urgentSection = chartView.findViewById(R.id.urgent_section);
-            FrameLayout highSection = chartView.findViewById(R.id.high_section);
-            FrameLayout mediumSection = chartView.findViewById(R.id.medium_section);
-            FrameLayout lowSection = chartView.findViewById(R.id.low_section);
-            
-            TextView urgentText = chartView.findViewById(R.id.urgent_count);
-            TextView highText = chartView.findViewById(R.id.high_count);
-            TextView mediumText = chartView.findViewById(R.id.medium_count);
-            TextView lowText = chartView.findViewById(R.id.low_count);
-            TextView totalText = chartView.findViewById(R.id.total_badge);
-            
-            // Используем те же цвета, что и в RecyclerView (MoveAdapter)
-            // Важно: точные цвета из MoveAdapter.setPriorityColor
-            urgentSection.setBackgroundColor(Color.parseColor("#8B0000")); // Неотложный (бордовый/темно-красный)
-            highSection.setBackgroundColor(Color.parseColor("#FF6347")); // Высокий (красный ближе к оранжевому)
-            mediumSection.setBackgroundColor(Color.YELLOW); // Средний (желтый)
-            lowSection.setBackgroundColor(Color.GREEN); // Низкий/Без приоритета (зеленый)
             
             // Устанавливаем количество для каждой секции
             urgentText.setText(String.valueOf(urgentCount));
@@ -1103,8 +1302,8 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
             setFrameLayoutWeight(mediumSection, mediumWeight);
             setFrameLayoutWeight(lowSection, lowWeight);
             
-            // Добавляем диаграмму в контейнер
-            statsContainer.addView(chartView);
+            // Добавляем диаграмму в контейнер - это уже сделано выше, если chartView создавался
+            // statsContainer.addView(chartView); 
             
         } catch (Exception e) {
             Log.e("MoveList_menu", "Ошибка при обновлении диаграммы приоритетов: " + e.getMessage());
@@ -1124,8 +1323,10 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
      */
     private void setFrameLayoutWeight(FrameLayout layout, float weight) {
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) layout.getLayoutParams();
+        if (params.weight != weight) { // Обновляем только если вес изменился
         params.weight = weight;
         layout.setLayoutParams(params);
+        }
     }
 
     private void updateFragmentsAfterMoving() {
@@ -1141,23 +1342,25 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
 
                 // Обновляем статистику приоритетов для текущего выбранного фрагмента
                 // на основе уже обновленных и отфильтрованных данных из ViewModel.
-                List<MoveItem> currentListToStat;
+                // List<MoveItem> currentListToStat; // Удалено - обновление диаграммы теперь через отдельные наблюдатели
                 int currentTab = getCurrentTabPosition(); // Используем актуальный getter
                 String statusToLog = (currentTab == 0) ? STATUS_FORMIROVAN : STATUS_KOMPLEKTUETSA;
 
-                if (currentTab == 0) {
-                    currentListToStat = moveListViewModel.filteredFormirovanList.getValue();
-                } else {
-                    currentListToStat = moveListViewModel.filteredKomplektuetsaList.getValue();
-                }
+                // Удалены строки ниже, так как диаграмма обновляется наблюдателями filteredFormirovanList и filteredKomplektuetsaList
+                // if (currentTab == 0) {
+                //     currentListToStat = moveListViewModel.filteredFormirovanList.getValue();
+                // } else {
+                //     currentListToStat = moveListViewModel.filteredKomplektuetsaList.getValue();
+                // }
 
-                if (currentListToStat != null) {
-                     updatePriorityBarChart(new ArrayList<>(currentListToStat)); // Передаем копию
-                     Log.d("MoveList_menu", "updateFragmentsAfterMoving: Статистика обновлена для вкладки " + statusToLog);
-                } else {
-                    Log.d("MoveList_menu", "updateFragmentsAfterMoving: Отфильтрованный список для статистики null для вкладки " + statusToLog);
-                    updatePriorityBarChart(new ArrayList<>()); 
-                }
+                // if (currentListToStat != null) {
+                //      updatePriorityBarChart(new ArrayList<>(currentListToStat)); // Передаем копию
+                //      Log.d("MoveList_menu", "updateFragmentsAfterMoving: Статистика обновлена для вкладки " + statusToLog);
+                // } else {
+                //     Log.d("MoveList_menu", "updateFragmentsAfterMoving: Отфильтрованный список для статистики null для вкладки " + statusToLog);
+                //     updatePriorityBarChart(new ArrayList<>()); 
+                // }
+                Log.d("MoveList_menu", "updateFragmentsAfterMoving: Обновление диаграммы приоритетов теперь обрабатывается наблюдателями filteredXXXList для вкладки " + statusToLog);
             });
         } catch (Exception e) {
             Log.e("MoveList_menu", "Ошибка при обновлении фрагментов: " + e.getMessage());
@@ -1168,7 +1371,7 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
     @Override
     protected void onDestroy() {
         // Принудительно закрываем диалог загрузки
-        loadingDialog.dismiss();
+        // loadingDialog.dismiss(); // ВРЕМЕННО КОММЕНТИРУЕМ
         
         // Отменяем подсветки фильтров
         clearFilterIndicator();
@@ -1187,7 +1390,7 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
         super.onStop();
         
         // Принудительно закрываем диалог загрузки
-        loadingDialog.dismiss();
+        // loadingDialog.dismiss(); // ВРЕМЕННО КОММЕНТИРУЕМ
     }
     
     /**
@@ -1211,28 +1414,26 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
         btnCancelSelection = findViewById(R.id.btnCancelSelection);
         
         // Изначально скрываем панель
-        actionButtonsPanel.setVisibility(View.GONE);
+        if (actionButtonsPanel != null) actionButtonsPanel.setVisibility(View.GONE);
         
         // Настраиваем обработчики нажатий
-        btnMoveToWork.setOnClickListener(v -> moveSelectedItemsBetweenStates(MOVE_TO_KOMPLEKTUETSA));
-        btnMoveFromWork.setOnClickListener(v -> moveSelectedItemsBetweenStates(MOVE_TO_FORMIROVAN));
+        if (btnMoveToWork != null) btnMoveToWork.setOnClickListener(v -> moveSelectedItemsBetweenStates(MOVE_TO_KOMPLEKTUETSA));
+        if (btnMoveFromWork != null) btnMoveFromWork.setOnClickListener(v -> moveSelectedItemsBetweenStates(MOVE_TO_FORMIROVAN));
         
         // Обработчик нажатия на кнопку "Отмена"
+        if (btnCancelSelection != null) {
         btnCancelSelection.setOnClickListener(v -> {
-            // Снимаем выбор со всех элементов
-            clearSelectionInCurrentFragment();
-            
-            // Скрываем панель выбора
-            actionButtonsPanel.animate()
-                .alpha(0f)
-                .setDuration(150)
-                .withEndAction(() -> {
-                    actionButtonsPanel.setVisibility(View.GONE);
-                    // Отключаем режим выбора
+                clearSelectionInCurrentFragment(); // Это запустит анимацию скрытия панели в updateSelectionPanel
+
+                // Выходим из режима выбора и показываем кнопку меню ПОСЛЕ того, как анимация панели отработает
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    if (isSelectionMode) { // Проверяем, действительно ли нужно выходить из режима
                     setSelectionMode(false);
-                })
-                .start();
+                    }
+                    // Фокус уже устанавливается внутри setSelectionMode(false)
+                }, 200); // Задержка чуть больше анимации панели (150мс)
         });
+        }
     }
     
     /**
@@ -1258,55 +1459,54 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
      * @param selectedCount количество выбранных элементов
      */
     public void updateSelectionPanel(int selectedCount) {
-        // Проверяем наличие компонентов панели
         if (actionButtonsPanel == null || selectedItemsCount == null) {
             Log.e("MoveList_menu", "Панель действий не инициализирована");
             return;
         }
         
-        // Если есть выбранные элементы, показываем панель, иначе скрываем
         if (selectedCount > 0) {
             if (!isSelectionMode) {
-                // Включаем режим выбора
-                setSelectionMode(true);
+                setSelectionMode(true); // Включаем режим выбора (это скроет navMenuButton)
             }
             
-            // Обновляем счетчик выбранных элементов
-            selectedItemsCount.setText(String.format("Выбрано: %d", selectedCount));
+            if (selectedItemsCount != null) selectedItemsCount.setText(String.format("Выбрано: %d", selectedCount));
             
-            // Показываем только нужную кнопку в зависимости от текущей вкладки
-            if (getCurrentTabPosition() == 0) { // Вкладка "Сформировано"
-                btnMoveToWork.setVisibility(View.VISIBLE);
-                btnMoveFromWork.setVisibility(View.GONE);
-            } else { // Вкладка "Комплектуется"
-                btnMoveToWork.setVisibility(View.GONE);
-                btnMoveFromWork.setVisibility(View.VISIBLE);
+            if (getCurrentTabPosition() == 0) { 
+                if (btnMoveToWork != null) btnMoveToWork.setVisibility(View.VISIBLE);
+                if (btnMoveFromWork != null) btnMoveFromWork.setVisibility(View.GONE);
+            } else { 
+                if (btnMoveToWork != null) btnMoveToWork.setVisibility(View.GONE);
+                if (btnMoveFromWork != null) btnMoveFromWork.setVisibility(View.VISIBLE);
             }
             
-            // Показываем панель с анимацией
             if (actionButtonsPanel.getVisibility() != View.VISIBLE) {
                 actionButtonsPanel.setVisibility(View.VISIBLE);
                 actionButtonsPanel.setAlpha(0f);
-                actionButtonsPanel.animate()
-                    .alpha(1f)
-                    .setDuration(200)
-                    .start();
+                actionButtonsPanel.animate().alpha(1f).setDuration(200).start();
             }
-        } else {
-            // Скрываем панель с анимацией, если она видна
+        } else { // selectedCount == 0
             if (actionButtonsPanel.getVisibility() == View.VISIBLE) {
                 actionButtonsPanel.animate()
                     .alpha(0f)
                     .setDuration(150)
                     .withEndAction(() -> {
+                        if (actionButtonsPanel != null) {
                         actionButtonsPanel.setVisibility(View.GONE);
-                        // Отключаем режим выбора
+                        }
+                        // Если количество выбранных элементов стало 0, и мы БЫЛИ в режиме выбора,
+                        // то выходим из режима выбора.
+                        if (isSelectionMode) {
                         setSelectionMode(false);
+                        }
                     })
                     .start();
             } else {
-                // Отключаем режим выбора, если панель не видна
+                // Если панель УЖЕ невидима (например, при инициализации или после предыдущего скрытия),
+                // но selectedCount == 0 и мы все еще в режиме выбора (маловероятно, но возможно),
+                // также выходим из режима выбора.
+                if (isSelectionMode) {
                 setSelectionMode(false);
+                }
             }
         }
     }
@@ -1327,12 +1527,11 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
             return;
         }
 
-        // Определяем текущее и целевое состояние
         String currentStatus;
         String targetStatus;
             
             if (moveType == MOVE_TO_KOMPLEKTUETSA) {
-            currentStatus = STATUS_FORMIROVAN; // Используем константы из ViewModel
+            currentStatus = STATUS_FORMIROVAN; 
             targetStatus = STATUS_KOMPLEKTUETSA;
             } else if (moveType == MOVE_TO_FORMIROVAN) {
             currentStatus = STATUS_KOMPLEKTUETSA;
@@ -1342,22 +1541,16 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
             return;
         }
         
-        // Проверка на перемещение элемента "Нет в наличии" в "Комплектуется"
-
-
-
-        // Вызываем метод ViewModel для перемещения элементов
         moveListViewModel.moveItems(new ArrayList<>(selectedItems), currentStatus, targetStatus);
+        clearSelectionInCurrentFragment(); // Это запустит анимацию скрытия панели
 
-        // Логика ниже (обновление UI, Snackbar) теперь обрабатывается через LiveData наблюдатели,
-        // подписанные на moveOperationMessage и filteredList изменения.
-
-        // Очищаем выбор в UI
-        clearSelectionInCurrentFragment();
-        // Отключаем режим выбора в UI
+        // Выходим из режима выбора и показываем кнопку меню ПОСЛЕ того, как анимация панели отработает
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (isSelectionMode) { // Проверяем, действительно ли нужно выходить из режима
         setSelectionMode(false);
-        
-
+            }
+            // Фокус уже устанавливается внутри setSelectionMode(false)
+        }, 200); // Задержка чуть больше анимации панели (150мс)
     }
 
     /**
@@ -1394,22 +1587,14 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
         
         if (enabled) {
             // Блокируем навигацию и свайпы
-            // 1. Отключаем ViewPager2 для свайпа между фрагментами
             viewPager.setUserInputEnabled(false);
-            
-            // 2. Блокируем открытие NavigationView
             drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+            if (navMenuButton != null) navMenuButton.hide(); // Скрываем кнопку меню
             
-            // 3. Скрываем кнопку открытия NavigationView
-            navMenuButton.hide();
-            
-            // 4. Отключаем обработчики нажатия для контейнеров
             MoveListFragment currentFragment = getCurrentFragment();
             if (currentFragment != null && currentFragment.getAdapter() != null) {
                 currentFragment.getAdapter().setContainerClickEnabled(false);
             }
-            
-            // 5. Отключаем нажатия на segment_control для предотвращения переключения между фрагментами
             if (segmentFormirovano != null) {
                 segmentFormirovano.setClickable(false);
                 segmentFormirovano.setEnabled(false);
@@ -1420,22 +1605,23 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
             }
         } else {
             // Возвращаем все функции UI
-            // 1. Включаем ViewPager2 для свайпа между фрагментами
             viewPager.setUserInputEnabled(true);
-            
-            // 2. Разблокируем открытие NavigationView
             drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
-            
-            // 3. Показываем кнопку открытия NavigationView
-            navMenuButton.show();
-            
-            // 4. Включаем обработчики нажатия для контейнеров
+            // Кнопка navMenuButton будет показана из updateSelectionPanel после скрытия панели действий
+            if (navMenuButton != null) {
+                navMenuButton.show(); // Показываем кнопку меню
+                navMenuButton.setClickable(true);
+                navMenuButton.setEnabled(true);
+                 // Переводим фокус на кнопку меню, когда выходим из режима выбора
+                if (navMenuButton.isShown()) { // Убедимся, что она действительно видима
+                    navMenuButton.requestFocus();
+                }
+            }
+
             MoveListFragment currentFragment = getCurrentFragment();
             if (currentFragment != null && currentFragment.getAdapter() != null) {
                 currentFragment.getAdapter().setContainerClickEnabled(true);
             }
-            
-            // 5. Включаем нажатия на segment_control для возвращения возможности переключения между фрагментами
             if (segmentFormirovano != null) {
                 segmentFormirovano.setClickable(true);
                 segmentFormirovano.setEnabled(true);
@@ -1500,6 +1686,10 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
         // Инициализация полей ввода и других элементов фильтрации
         filterSender = findViewById(R.id.filter_sender);
         filterMovementNumber = findViewById(R.id.filter_movement_number);
+        if (filterMovementNumber != null) {
+            // Устанавливаем флаг как можно раньше после получения View
+            filterMovementNumber.setShowSoftInputOnFocus(false);
+        }
         filterRecipient = findViewById(R.id.filter_recipient);
         filterAssembler = findViewById(R.id.filter_assembler);
         filterReceiver = findViewById(R.id.filter_receiver);
@@ -1515,6 +1705,21 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
 
         btnResetFilters = findViewById(R.id.btn_reset_filters);
 
+        // Инициализация адаптера для Spinner приоритетов
+        if (filterPriority != null) {
+            List<String> priorityOptions = new ArrayList<>();
+            priorityOptions.add("Все"); // Должен быть первым для корректной работы resetFilters и setSpinnerSelection
+            priorityOptions.add(MoveListViewModel.PRIORITY_URGENT); // "Неотложный"
+            priorityOptions.add(MoveListViewModel.PRIORITY_HIGH);   // "Высокий"
+            priorityOptions.add(MoveListViewModel.PRIORITY_MEDIUM); // "Средний"
+            priorityOptions.add(MoveListViewModel.PRIORITY_LOW);    // "Низкий"
+
+            ArrayAdapter<String> priorityAdapter = new ArrayAdapter<>(this,
+                    android.R.layout.simple_spinner_item, priorityOptions);
+            priorityAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            filterPriority.setAdapter(priorityAdapter);
+        }
+
         // Устанавливаем TextWatcher'ы и слушатели
         setupFilterListeners();
     }
@@ -1525,22 +1730,31 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
             if (getCurrentTabPosition() == 0) moveListViewModel.setFormirovanSenderFilter(text);
             else moveListViewModel.setKomplektuetsaSenderFilter(text);
         });
+        setupEnterKeyListener(filterSender); // Добавляем слушатель Enter
+
         addTextWatcher(filterMovementNumber, text -> {
             if (getCurrentTabPosition() == 0) moveListViewModel.setFormirovanMovementNumberFilter(text);
             else moveListViewModel.setKomplektuetsaMovementNumberFilter(text);
         });
+        setupEnterKeyListener(filterMovementNumber); // Добавляем слушатель Enter
+
         addTextWatcher(filterRecipient, text -> {
             if (getCurrentTabPosition() == 0) moveListViewModel.setFormirovanRecipientFilter(text);
             else moveListViewModel.setKomplektuetsaRecipientFilter(text);
         });
+        setupEnterKeyListener(filterRecipient); // Добавляем слушатель Enter
+
         addTextWatcher(filterAssembler, text -> {
             if (getCurrentTabPosition() == 0) moveListViewModel.setFormirovanAssemblerFilter(text);
             else moveListViewModel.setKomplektuetsaAssemblerFilter(text);
         });
+        setupEnterKeyListener(filterAssembler); // Добавляем слушатель Enter
+
         addTextWatcher(filterReceiver, text -> {
             if (getCurrentTabPosition() == 0) moveListViewModel.setFormirovanReceiverFilter(text);
             else moveListViewModel.setKomplektuetsaReceiverFilter(text);
         });
+        setupEnterKeyListener(filterReceiver); // Добавляем слушатель Enter
 
         // Слушатель для Spinner
         filterPriority.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -1652,23 +1866,57 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
 
     private void scrollToView(View view) {
         if (view == null || navigationView == null) return;
+
         NestedScrollView scrollView = navigationView.findViewById(R.id.filter_scroll_view);
-        if (scrollView != null) {
-            // Используем post для выполнения прокрутки после того, как view будет полностью размещен
+        if (scrollView == null) {
+            Log.w("MoveList_menu", "scrollToView: NestedScrollView with ID R.id.filter_scroll_view not found in navigationView.");
+            return;
+        }
+
+        // Используем post, чтобы дождаться, пока view будет полностью размещен и клавиатура (если есть) повлияет на размеры окна
             view.post(() -> {
-                Rect scrollBounds = new Rect();
-                scrollView.getHitRect(scrollBounds);
-                if (view.getLocalVisibleRect(scrollBounds)) {
-                    // view уже виден, ничего не делаем
+            Rect viewRect = new Rect();
+            view.getGlobalVisibleRect(viewRect); // Глобальные координаты поля ввода
+
+            Rect windowRect = new Rect();
+            getWindow().getDecorView().getWindowVisibleDisplayFrame(windowRect); // Видимая область окна Activity
+
+            int screenHeight = getWindow().getDecorView().getRootView().getHeight();
+            int keyboardHeight = screenHeight - windowRect.bottom; // Предполагаемая высота клавиатуры
+            
+            // Если клавиатура не видна (или ее высота мала), и поле уже видимо, не скроллим
+            // Это предотвратит ненужные скачки, если клавиатура уже скрыта или поле полностью видно.
+            if (keyboardHeight < 100 && viewRect.top >= windowRect.top && viewRect.bottom <= windowRect.bottom) {
+                 // Log.d("MoveList_menu", "scrollToView: Keyboard not significant or view already visible. No scroll needed.");
                     return;
                 }
-                // Простой вариант прокрутки к верху view
-                scrollView.smoothScrollTo(0, view.getTop());
-            });
+
+            // Целевая позиция Y для нижнего края поля ввода (с небольшим отступом)
+            int targetViewBottomY = windowRect.bottom - dpToPx(16); // 16dp отступ от верха клавиатуры/низа видимой области
+
+            // Текущая позиция нижнего края поля ввода на экране
+            int currentViewBottomY = viewRect.bottom;
+
+            if (currentViewBottomY > targetViewBottomY) {
+                // Поле ввода перекрывается клавиатурой или находится слишком низко
+                int scrollAmount = currentViewBottomY - targetViewBottomY;
+                scrollView.smoothScrollBy(0, scrollAmount);
+                Log.d("MoveList_menu", "scrollToView: Scrolling by " + scrollAmount);
         } else {
-            Log.w("MoveList_menu", "scrollToView: NestedScrollView with ID R.id.filter_scroll_view not found in navigationView.");
-        }
+                // Поле ввода уже выше целевой позиции или полностью видно над клавиатурой
+                // Можно добавить логику для прокрутки вниз, если поле слишком высоко, но обычно это не требуется.
+                // Log.d("MoveList_menu", "scrollToView: View is already above target or fully visible.");
+            }
+        });
     }
+
+    /**
+     * Конвертирует dp в пиксели. Вспомогательный метод.
+     */
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density);
+        }
+
     // --- КОНЕЦ ДОБАВЛЕННЫХ МЕТОДОВ ---
 
     // +++ МЕТОДЫ ДЛЯ НАСТРОЙКИ UI (NavigationView и TouchListener) +++
@@ -1678,30 +1926,45 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
             return;
         }
 
-        navMenuButton.setOnClickListener(v -> {
-            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                drawerLayout.closeDrawer(GravityCompat.START);
-            } else {
-                // Перед открытием скрываем клавиатуру и убираем фокус
-                hideKeyboard();
-                clearFocus();
-                drawerLayout.openDrawer(GravityCompat.START);
+        navMenuButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    // Дополнительно проверяем и очищаем фокус
+                    View currentFocus = getCurrentFocus();
+                    if (currentFocus instanceof EditText) {
+                        // Не должно происходить, т.к. уже очистили в onTouch,
+                        // но на всякий случай повторяем
+                        currentFocus.clearFocus();
+                        hideKeyboard(currentFocus);
+                    }
+
+                    // Запускаем анимацию кнопки (из исходной логики)
+                    animateMenuButton(v);
+
+                    // Открываем боковое меню с небольшой задержкой
+                    v.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (drawerLayout != null) {
+                                drawerLayout.openDrawer(GravityCompat.START);
+                            }
+                        }
+                    }, 300); // Задержка открытия меню для завершения анимации
+                } catch (Exception e) {
+                    // Если что-то пошло не так, просто открываем шторку
+                    Log.e("PrixodActivity", "Ошибка при обработке нажатия на menuButton: " + e.getMessage());
+                    if (drawerLayout != null) {
+                        drawerLayout.openDrawer(GravityCompat.START);
+                    }
+                }
             }
         });
 
         navigationView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
             // TODO: Добавить обработку выбора пунктов меню
-            // Пример:
-            // if (id == R.id.nav_item1) {
-            //    // Действие для nav_item1
-            // } else if (id == R.id.nav_item2) {
-            //    // Действие для nav_item2
-            // }
-
             Log.d("MoveList_menu", "Selected navigation item: " + item.getTitle());
-
-            // Закрываем шторку после выбора
             drawerLayout.closeDrawer(GravityCompat.START);
             return true;
         });
@@ -1712,53 +1975,323 @@ public class MoveList_menu extends com.step.tcd_rpkb.base.BaseFullscreenActivity
             @Override
             public void onDrawerClosed(View drawerView) {
                 preventKeyboardShowOnDrawerClose();
+                clearAllFocusInNavigationEditTexts();
+                hideKeyboard();
+                
+                if (navMenuButton != null) {
+                    navMenuButton.setFocusable(true);
+                    navMenuButton.setFocusableInTouchMode(true);
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        if (navMenuButton != null && navMenuButton.isAttachedToWindow()) { 
+                           navMenuButton.requestFocus();
+                        }
+                    }, 100); 
+                }
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                if (filterMovementNumber != null && filterMovementNumber.hasFocus()) {
+                    hideKeyboard(filterMovementNumber);
+                }
+                // Когда NavigationView открывается, даем ему возможность перехватывать нажатия клавиш
+                // Это нужно для обработки Enter, когда фокус не на EditText
+                if (navigationView != null) {
+                    navigationView.setFocusable(true); // Убедимся, что он может получить фокус
+                    navigationView.setFocusableInTouchMode(true);
+                    navigationView.requestFocus(); // Передаем фокус, чтобы он мог слушать клавиши
+                    navigationView.setOnKeyListener((v, keyCode, event) -> {
+                        if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
+                            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                                View currentFocus = getCurrentFocus();
+                                boolean focusIsOnEditTextInNav = false;
+                                if (currentFocus instanceof EditText && isViewInsideViewGroup(navigationView, currentFocus)) {
+                                    focusIsOnEditTextInNav = true;
+                                }
+
+                                if (!focusIsOnEditTextInNav) {
+                                    drawerLayout.closeDrawer(GravityCompat.START);
+                                    return true; // Событие обработано
+                                }
+                            }
+                        }
+                        return false; // Передаем событие дальше, если не обработано
+                    });
+                }
             }
         });
     }
 
-    private void setupTouchListener() {
-        View mainContent = findViewById(R.id.drawer_layout); // Предполагаем, что у вас есть корневой контейнер с таким ID
-                                                                      // или используйте findViewById(android.R.id.content).getChildAt(0)
-                                                                      // или ваш конкретный корневой элемент layout/movelist_menu.xml
-        if (mainContent == null) {
-            Log.e("MoveList_menu", "setupTouchListener: Main content view (R.id.main_content_container) not found.");
-            // В качестве запасного варианта, если R.id.main_content_container не найден,
-            // можно попробовать установить слушатель на getWindow().getDecorView(), но это может перехватывать слишком много событий.
-            // View decorView = getWindow().getDecorView();
-            // decorView.setOnTouchListener(...);
-            return; 
+    private void animateMenuButton(View view) {
+        // Создаем набор аниматоров для комплексной анимации
+        AnimatorSet animatorSet = new AnimatorSet();
+
+        // Сохраняем оригинальный цвет фона
+        final android.graphics.drawable.Drawable originalBackground = view.getBackground();
+
+        // Анимация пульсации (увеличение/уменьшение)
+        ObjectAnimator scaleXPulse = ObjectAnimator.ofFloat(view, "scaleX", 1f, 1.2f, 0.8f, 1.1f, 1f);
+        ObjectAnimator scaleYPulse = ObjectAnimator.ofFloat(view, "scaleY", 1f, 1.2f, 0.8f, 1.1f, 1f);
+
+        // Анимация вращения на 360 градусов с учетом Z-оси (3D эффект)
+        ObjectAnimator rotationY = ObjectAnimator.ofFloat(view, "rotationY", 0f, 360f);
+
+        // Анимация смещения с эффектом пружины
+        ObjectAnimator translateY = ObjectAnimator.ofFloat(view, "translationY", 0f, -20f, 15f, -10f, 0f);
+
+        // Анимация изменения прозрачности
+        ObjectAnimator alpha = ObjectAnimator.ofFloat(view, "alpha", 1f, 0.7f, 1f);
+
+        // Анимация тени (elevation) для эффекта "всплытия" кнопки
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            float originalElevation = view.getElevation();
+            ObjectAnimator elevation = ObjectAnimator.ofFloat(view, "elevation", originalElevation, originalElevation + 15f, originalElevation);
+            animatorSet.playTogether(scaleXPulse, scaleYPulse, rotationY, translateY, alpha, elevation);
+
+            // Создаем эффект ripple программно
+            view.setOutlineProvider(new android.view.ViewOutlineProvider() {
+                @Override
+                public void getOutline(View view, android.graphics.Outline outline) {
+                    outline.setOval(0, 0, view.getWidth(), view.getHeight());
+                }
+            });
+            view.setClipToOutline(true);
+        } else {
+            // Для старых устройств используем базовую анимацию
+            animatorSet.playTogether(scaleXPulse, scaleYPulse, rotationY, translateY, alpha);
         }
 
-        mainContent.setOnTouchListener((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                // Если шторка открыта, закрываем ее и потребляем событие
-                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                    hideKeyboard(); // Также скрываем клавиатуру
-                    clearFocus();   // И убираем фокус
-                    drawerLayout.closeDrawer(GravityCompat.START);
-                    return true; // Событие обработано
-                }
+        // Настраиваем параметры анимации
+        animatorSet.setDuration(500); // Оптимальная длительность
 
-                // Скрываем клавиатуру, если текущий фокус не на EditText
-                // или если просто хотим скрывать клавиатуру при любом касании вне EditText
-                View currentFocusedView = getCurrentFocus();
-                if (currentFocusedView instanceof EditText) {
-                    // Можно добавить более сложную логику, чтобы не скрывать клавиатуру,
-                    // если тап был внутри этого же EditText (хотя обычно EditText сам это обрабатывает)
-                    // Rect outRect = new Rect();
-                    // currentFocusedView.getGlobalVisibleRect(outRect);
-                    // if (!outRect.contains((int)event.getRawX(), (int)event.getRawY())) {
-                    //    hideKeyboard();
-                    //    clearFocus(); // Возможно, не всегда нужно убирать фокус
-                    // }
-                } else {
-                    // Если фокус не на EditText, или его вообще нет, скрываем клавиатуру
-                    hideKeyboard();
-                    // clearFocus(); // Убирать фокус здесь может быть излишне, если только клавиатура мешает
+        // Используем пользовательский интерполятор для более плавной анимации
+        animatorSet.setInterpolator(new android.view.animation.PathInterpolator(0.4f, 0f, 0.2f, 1f));
+
+        // Добавляем слушатель завершения анимации
+        animatorSet.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                // Возвращаем исходные значения после анимации
+                view.setRotationY(0f);
+                view.setTranslationY(0f);
+                view.setScaleX(1f);
+                view.setScaleY(1f);
+                view.setAlpha(1f);
+
+                // Возвращаем оригинальный фон
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    view.setBackground(originalBackground);
                 }
             }
-            return false; // Возвращаем false, чтобы другие слушатели (например, у ViewPager) тоже могли обработать событие
         });
+
+        // Запускаем анимацию
+        animatorSet.start();
+
+        // Добавляем тактильную обратную связь (вибрацию)
+        view.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
+
+        // Создаем эффект круговой волны при нажатии (ripple)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            // Получаем координаты центра кнопки
+            int centerX = view.getWidth() / 2;
+            int centerY = view.getHeight() / 2;
+
+            // Создаем маску для ripple эффекта
+            int finalRadius = Math.max(view.getWidth(), view.getHeight());
+
+            // Создаем анимацию ripple
+            android.animation.Animator rippleAnim = android.view.ViewAnimationUtils.createCircularReveal(
+                    view, centerX, centerY, 0, finalRadius);
+            rippleAnim.setDuration(400);
+            rippleAnim.start();
+
+            // Дополнительно меняем фон на короткое время
+            try {
+                final int originalColor = 0xFF3F51B5; // Индиго
+                final int highlightColor = 0xFF4CAF50; // Зеленый
+
+                // Создаем временный цветной фон
+                android.graphics.drawable.GradientDrawable gradientDrawable = new android.graphics.drawable.GradientDrawable();
+                gradientDrawable.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+                gradientDrawable.setColor(highlightColor);
+                view.setBackground(gradientDrawable);
+
+                // Возвращаем оригинальный цвет через небольшую задержку
+                view.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        android.graphics.drawable.GradientDrawable originalDrawable = new android.graphics.drawable.GradientDrawable();
+                        originalDrawable.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+                        originalDrawable.setColor(originalColor);
+                        view.setBackground(originalDrawable);
+                    }
+                }, 200);
+            } catch (Exception e) {
+                Log.e("MenuAnimation", "Ошибка при изменении цвета фона: " + e.getMessage());
+            }
+        }
     }
+    // Метод setupTouchListener удален, так как его логика перенесена в dispatchTouchEvent
+    // private void setupTouchListener() { ... }
+
     // --- КОНЕЦ МЕТОДОВ ДЛЯ НАСТРОЙКИ UI ---
+
+    // +++ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДЛЯ УПРАВЛЕНИЯ ФОКУСОМ И КЛАВИАТУРОЙ +++
+
+    /**
+     * Проверяет, находится ли касание в пределах указанного View.
+     * Копировано из PrixodActivity.
+     */
+    private boolean isTouchOnView(MotionEvent event, View view) {
+        if (view == null || event == null) {
+            return false;
+        }
+        int[] viewLocation = new int[2];
+        view.getLocationOnScreen(viewLocation);
+
+        float touchX = event.getRawX();
+        float touchY = event.getRawY();
+
+        return (touchX >= viewLocation[0] && touchX <= viewLocation[0] + view.getWidth() &&
+                touchY >= viewLocation[1] && touchY <= viewLocation[1] + view.getHeight());
+    }
+
+    /**
+     * Проверяет, является ли view дочерним элементом group (прямым или косвенным).
+     */
+    private boolean isViewInsideViewGroup(ViewGroup group, View view) {
+        if (group == null || view == null) {
+            return false;
+        }
+        if (group == view) {
+            return true;
+        }
+        ViewParent parent = view.getParent();
+        while (parent != null) {
+            if (parent == group) {
+                return true;
+            }
+            if (!(parent instanceof View)) { // Дошли до Window или чего-то не View
+                break;
+            }
+            parent = parent.getParent();
+        }
+        return false;
+    }
+
+
+    /**
+     * Рекурсивно снимает фокус с EditText внутри ViewGroup.
+     */
+    private void clearFocusRecursivelyFromViewGroup(ViewGroup group) {
+        if (group == null) {
+            return; 
+        }
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View child = group.getChildAt(i);
+            if (child instanceof EditText) {
+                child.clearFocus();
+            } else if (child instanceof ViewGroup) {
+                clearFocusRecursivelyFromViewGroup((ViewGroup) child);
+            }
+        }
+    }
+
+    /**
+     * Снимает фокус со всех EditText внутри NavigationView.
+     */
+    private void clearAllFocusInNavigationEditTexts() {
+        if (navigationView != null) {
+            clearFocusRecursivelyFromViewGroup(navigationView);
+        }
+    }
+    
+    /**
+     * Настраивает слушатель касаний для NestedScrollView в NavigationView,
+     * чтобы обрабатывать клики вне полей ввода и скрывать клавиатуру.
+     */
+    private void setupFilterScrollViewTouchListener() {
+        if (navigationView == null) return;
+        NestedScrollView scrollView = navigationView.findViewById(R.id.filter_scroll_view);
+        if (scrollView != null) {
+            scrollView.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    View currentFocusedView = getCurrentFocus();
+                    // Проверяем, является ли текущий фокус EditText и находится ли он внутри NavigationView
+                    if (currentFocusedView instanceof EditText && isViewInsideViewGroup(navigationView, currentFocusedView)) {
+                        // Если касание было НЕ на этом EditText
+                        if (!isTouchOnView(event, currentFocusedView)) {
+                            hideKeyboard(currentFocusedView); // Скрываем клавиатуру, используя токен текущего фокуса
+                            currentFocusedView.clearFocus();
+                            // Не потребляем событие (return false), чтобы ScrollView мог его обработать (например, для скроллинга)
+                        }
+                    }
+                }
+                return false; // Позволяем событию продолжить распространение для скроллинга
+            });
+        }
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            // 1. Обработка, если NavigationView (боковое меню) открыто
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                if (navigationView != null && !isTouchOnView(event, navigationView)) {
+                    // Касание вне NavigationView при открытом меню
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                    clearAllFocusInNavigationEditTexts(); // Очищаем фокус в NavigationView
+                    hideKeyboard(drawerLayout); // Используем hideKeyboard(drawerLayout) для большей надежности
+                    return true; // Потребляем событие, чтобы предотвратить другие действия
+                }
+                // Если касание внутри NavigationView, позволяем событию обрабатываться дальше (например, setupFilterScrollViewTouchListener)
+            }
+
+            // 2. Обработка, если фокус на EditText внутри NavigationView (меню может быть открыто или закрыто)
+                View currentFocusedView = getCurrentFocus();
+            if (currentFocusedView instanceof EditText && navigationView != null && isViewInsideViewGroup(navigationView, currentFocusedView)) {
+                if (!isTouchOnView(event, currentFocusedView)) {
+                    // Касание вне текущего сфокусированного EditText в NavigationView
+                    hideKeyboard(currentFocusedView);
+                    currentFocusedView.clearFocus();
+                    // Не потребляем событие здесь полностью (super.dispatchTouchEvent все равно вызовется),
+                    // чтобы позволить другим элементам среагировать, если это необходимо,
+                    // но основная работа по снятию фокуса и скрытию клавиатуры сделана.
+                }
+            }
+            // 3. Если просто тапнули по основной части экрана (R.id.main) и клавиатура была открыта для какого-то поля (не обязательно в NavigationView)
+            // Это покрывается общим случаем выше, если currentFocusedView - это EditText.
+            // Если нужно специфичное поведение для R.id.main, его можно добавить, но лучше обобщить.
+            // View mainArea = findViewById(R.id.main); // Предположим, это ваш главный контейнер контента
+            // if (mainArea != null && isTouchOnView(event, mainArea) && !(currentFocusedView instanceof EditText && isTouchOnView(event, currentFocusedView))) {
+            //    if (currentFocusedView instanceof EditText) { // Если фокус был на каком-то EditText
+            //        hideKeyboard(currentFocusedView);
+            //        currentFocusedView.clearFocus();
+            //    } else { // Если фокус не был на EditText, но клавиатура могла быть активна
+            //        hideKeyboard();
+            //    }
+            // }
+
+
+        }
+        return super.dispatchTouchEvent(event);
+    }
+    
+    // --- КОНЕЦ ВСПОМОГАТЕЛЬНЫХ МЕТОДОВ ---
+
+
+    /**
+     * Обновляет визуальное отображение выбранного сегмента в соответствии с текущей позицией вкладки
+     */
+    private void hideKeyboard(View fromView) {
+        if (fromView == null) {
+            hideKeyboard(); // Fallback to default hideKeyboard if fromView is null
+            return;
+        }
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (fromView.getWindowToken() != null) {
+            imm.hideSoftInputFromWindow(fromView.getWindowToken(), 0);
+        }
+    }
 }

@@ -6,8 +6,7 @@
     android:layout_height="wrap_content"
     android:layout_marginStart="6dp"
     android:layout_marginEnd="6dp"
-    android:layout_marginBottom="2dp"
-    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
     app:cardCornerRadius="12dp"
     app:cardElevation="4dp"
     app:cardBackgroundColor="#FFFFFF">
@@ -140,8 +139,9 @@
                     android:textSize="16sp"
                     android:importantForAutofill="no"
                     android:textAlignment="center"
+                    android:imeOptions="actionDone"
                     android:background="@null"
-                    android:layout_marginEnd="8dp"
+                    android:paddingEnd="6dp"
                     android:singleLine="true" />
             </LinearLayout>
         </LinearLayout>

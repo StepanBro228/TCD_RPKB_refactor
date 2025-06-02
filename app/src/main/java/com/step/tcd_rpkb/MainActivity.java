@@ -59,41 +59,16 @@ public class MainActivity extends BaseFullscreenActivity implements LoginDialogF
             }
         });
         
-        // enableFullScreen будет вызван в onResume
+
     }
     
     @Override
     protected void onResume() {
         super.onResume();
-        // Повторно включаем полноэкранный режим при возобновлении активности
-        enableFullScreen();
+
     }
     
-    @Override
-    protected void enableFullScreen() {
-        // API уровень на устройстве RUGLINE RT41 = 30
-        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
-            // Конкретная обработка для Android 11 (API 30)
-            View decorView = getWindow().getDecorView();
-            if (decorView != null) {
-                WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), decorView);
-                if (controller != null) {
-                    // Скрываем только панель навигации, оставляя строку состояния
-                    controller.hide(WindowInsetsCompat.Type.navigationBars());
-                    controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-                }
-            }
-        } else {
-            // Для Android 10 (API 29) и ниже - скрываем только панель навигации
-            
-            View decorView = getWindow().getDecorView();
-            if (decorView != null) {
-                int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
-                decorView.setSystemUiVisibility(uiOptions);
-            }
-        }
-    }
+
     
     /**
      * Показывает диалог настроек подключения

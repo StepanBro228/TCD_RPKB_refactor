@@ -140,7 +140,7 @@ public class FloatingSortView extends FrameLayout {
     /**
      * Переключает видимость панели сортировки с анимацией
      */
-    private void toggleSortPanel() {
+    protected void toggleSortPanel() {
         if (isPanelExpanded) {
             // Скрываем панель
             AnimatorSet animatorSet = new AnimatorSet();

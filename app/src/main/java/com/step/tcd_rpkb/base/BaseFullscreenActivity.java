@@ -20,7 +20,7 @@ public class BaseFullscreenActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // enableFullScreen вызывается в onResume
+
     }
 
     @Override
@@ -37,17 +37,17 @@ public class BaseFullscreenActivity extends AppCompatActivity {
      */
     protected void enableFullScreen() {
         if (getWindow() == null) return;
-        
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
         // API уровень на устройстве RUGLINE RT41 = 30
-        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             // Конкретная обработка для Android 11 (API 30)
-            View decorView = getWindow().getDecorView();
-            if (decorView != null) {
-                WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), decorView);
-                if (controller != null) {
-                    controller.hide(WindowInsetsCompat.Type.statusBars() | WindowInsetsCompat.Type.navigationBars());
-                    controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-                }
+            final WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (controller != null) {
+                getWindow().setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+                getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+                controller.hide(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.navigationBars());
+                controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
             }
         } else {
             // Для Android 10 (API 29) и ниже

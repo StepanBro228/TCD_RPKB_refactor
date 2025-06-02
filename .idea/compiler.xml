@@ -4,8 +4,6 @@
     <bytecodeTargetLevel target="11">
       <module name="TCD_RPKB.app" target="21" />
       <module name="TCD_RPKB.data" target="21" />
-      <module name="TCD_RPKB_refactor.app" target="21" />
-      <module name="TCD_RPKB_refactor.data" target="21" />
     </bytecodeTargetLevel>
   </component>
 </project>

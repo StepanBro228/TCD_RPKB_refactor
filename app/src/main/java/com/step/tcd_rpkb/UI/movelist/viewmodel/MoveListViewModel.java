@@ -19,6 +19,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @HiltViewModel
 public class MoveListViewModel extends ViewModel {
@@ -65,7 +67,7 @@ public class MoveListViewModel extends ViewModel {
     public LiveData<List<MoveItem>> originalKomplektuetsaList = _originalKomplektuetsaList;
 
     // LiveData для отфильтрованных списков (пока просто дублируют оригинальные, фильтрация будет позже)
-    // TODO: Реализовать логику фильтрации для этих LiveData
+
     private final MutableLiveData<List<MoveItem>> _filteredFormirovanList = new MutableLiveData<>(new ArrayList<>());
     public LiveData<List<MoveItem>> filteredFormirovanList = _filteredFormirovanList;
 
@@ -106,23 +108,28 @@ public class MoveListViewModel extends ViewModel {
     public LiveData<Boolean> komplektuetsaCpsChecked;
     public LiveData<Boolean> komplektuetsaAvailabilityChecked;
 
-    // --- LiveData для управления состоянием отмены ---
-    private final MutableLiveData<Boolean> _undoAvailable = new MutableLiveData<>(false);
-    public LiveData<Boolean> undoAvailable = _undoAvailable;
+    // --- Вспомогательный класс и LiveData для состояния отмены ---
+    private static class MovedItemDataForUndo {
+        final MoveItem originalItemState; // Состояние ДО перемещения
+        final int originalIndex;
 
-    private final MutableLiveData<List<MoveItem>> _lastMovedItems = new MutableLiveData<>();
-    // Не делаем public LiveData для _lastMovedItems, т.к. это внутреннее состояние для undo
+        MovedItemDataForUndo(MoveItem item, int index) {
+            // Создаем копию, чтобы сохранить оригинальный статус
+            this.originalItemState = new MoveItem(item.getMovementId(), item.getMovementDisplayText(), item.isCps(), item.getDate(), item.getNumber(), item.getComment(), item.getProductName(), item.getResponsiblePersonName(), item.getColor(), item.getPriority(), item.getAssemblerName(), item.getSigningStatus(), item.getSourceWarehouseName(), item.getDestinationWarehouseName(), item.getItemsCount(), item.getPositionsCount());
+            this.originalIndex = index;
+        }
+    }
+
+    private final MutableLiveData<List<MovedItemDataForUndo>> _undoStack = new MutableLiveData<>();
+    // _lastMovedItems больше не нужен
 
     private final MutableLiveData<String> _lastMoveSourceState = new MutableLiveData<>();
-    // Не делаем public LiveData, внутреннее состояние
-
     private final MutableLiveData<String> _lastMoveTargetState = new MutableLiveData<>();
-    // Не делаем public LiveData, внутреннее состояние
 
     // Для сообщений UI, таких как Snackbar. Предполагается наличие класса SingleLiveEvent.
     // Если его нет, можно использовать MutableLiveData и обрабатывать события соответствующим образом в Activity/Fragment.
-    private final MutableLiveData<String> _moveOperationMessage = new MutableLiveData<>(); // Замена на MutableLiveData, если SingleLiveEvent нет
-    public LiveData<String> moveOperationMessage = _moveOperationMessage;
+    // private final MutableLiveData<String> _moveOperationMessage = new MutableLiveData<>(); // ЗАКОММЕНТИРОВАНО
+    // public LiveData<String> moveOperationMessage = _moveOperationMessage; // ЗАКОММЕНТИРОВАНО
 
     // LiveData для управления видимостью кнопки обновления
     private final MutableLiveData<Boolean> _showRefreshButton = new MutableLiveData<>(false);
@@ -157,12 +164,29 @@ public class MoveListViewModel extends ViewModel {
     private final MutableLiveData<Boolean> _isAnyFilterActiveLive = new MutableLiveData<>(false);
     public LiveData<Boolean> isAnyFilterActiveLive = _isAnyFilterActiveLive;
 
+    // Новый LiveData для управления Snackbar с отменой
+    private final MutableLiveData<SingleEvent<SnackbarEvent>> _showUndoSnackbarEvent = new MutableLiveData<>();
+    public LiveData<SingleEvent<SnackbarEvent>> showUndoSnackbarEvent = _showUndoSnackbarEvent;
+
+    // Класс-обертка для данных Snackbar
+    public static class SnackbarEvent {
+        public final String message;
+        public final boolean showUndoAction;
+
+        public SnackbarEvent(String message, boolean showUndoAction) {
+            this.message = message;
+            this.showUndoAction = showUndoAction;
+        }
+    }
+
     private final MoveRepository moveRepository;
+    private final ExecutorService executorService;
 
     @Inject
     public MoveListViewModel(SavedStateHandle savedStateHandle, MoveRepository moveRepository) {
         this.savedStateHandle = savedStateHandle;
         this.moveRepository = moveRepository;
+        this.executorService = Executors.newSingleThreadExecutor(); // Создаем пул из одного потока
 
         // Инициализация LiveData фильтров из SavedStateHandle
         currentTabPosition = savedStateHandle.getLiveData(KEY_CURRENT_TAB_POSITION, 0);
@@ -185,11 +209,7 @@ public class MoveListViewModel extends ViewModel {
         komplektuetsaCpsChecked = savedStateHandle.getLiveData(KEY_KOMPLEKTUETSA_CPS_CHECKED, true);
         komplektuetsaAvailabilityChecked = savedStateHandle.getLiveData(KEY_KOMPLEKTUETSA_AVAILABILITY_CHECKED, true);
 
-        // Начальная загрузка данных при создании ViewModel
-        // Проверяем, есть ли уже данные в _originalFormirovanList, чтобы не загружать повторно при пересоздании ViewModel
-        if (_originalFormirovanList.getValue() == null || _originalFormirovanList.getValue().isEmpty()) {
-            loadMoveData();
-        }
+
     }
 
     /**
@@ -198,7 +218,7 @@ public class MoveListViewModel extends ViewModel {
      */
     public void loadMoveData() {
         _isLoading.setValue(true);
-        _errorMessage.setValue(null); // Сбрасываем предыдущую ошибку
+        _errorMessage.setValue(null);
 
         // Используем значения по умолчанию для дат, если они не указаны (репозиторий сам обработает null)
         String startDate = null; // DataProvider.formatDateForRequest(DataProvider.getTwoMonthsAgo());
@@ -225,28 +245,32 @@ public class MoveListViewModel extends ViewModel {
                     sortByPriority(formirovanList);
                     sortByPriority(komplektuetsaList);
 
-                    _originalFormirovanList.postValue(formirovanList);
-                    _originalKomplektuetsaList.postValue(komplektuetsaList);
+                    _originalFormirovanList.setValue(formirovanList);
+                    _originalKomplektuetsaList.setValue(komplektuetsaList);
 
-                    // TODO: После реализации фильтров, обновлять _filtered...List здесь на основе _original...List и текущих фильтров.
-                    // Пока что просто копируем.
-                    _filteredFormirovanList.postValue(new ArrayList<>(formirovanList));
-                    _filteredKomplektuetsaList.postValue(new ArrayList<>(komplektuetsaList));
+
+                    setKomplektuetsaAvailabilityChecked(true);
+                    setFormirovanAvailabilityChecked(true);
+                    setKomplektuetsaCpsChecked(true);
+                    setFormirovanCpsChecked(true);
+
+
+                    _isLoading.postValue(false);
 
                 } else {
-                    _errorMessage.postValue("Ошибка загрузки данных: пустой ответ");
+                        _errorMessage.setValue("Ответ сервера пуст или не содержит элементов.");
+
                 }
-                _isLoading.postValue(false);
+
             }
 
             @Override
-            // public void onError(String errorMsg) { // Старый метод
             public void onError(Exception exception) { // Новый метод
-                // _errorMessage.postValue("Ошибка при загрузке данных: " + errorMsg);
-                _errorMessage.postValue("Ошибка при загрузке данных: " + exception.getMessage());
-                _isLoading.postValue(false);
+                    _errorMessage.setValue("Ошибка загрузки списка перемещений: " + exception.getMessage());
+                    _isLoading.setValue(false); // Восстанавливаем
             }
         });
+
     }
 
     /**
@@ -363,56 +387,43 @@ public class MoveListViewModel extends ViewModel {
      * чтобы пересчитать _filteredFormirovanList и _filteredKomplektuetsaList.
      */
     private void triggerFilterRecalculation() {
-        // Эта функция теперь будет вызываться после каждого изменения фильтра
-        // или смены вкладки.
-        // Здесь мы применим фильтры к оригинальным спискам и обновим _filtered...List.
+        executorService.execute(() -> {
+            // Логика фильтрации остается прежней, но выполняется в фоновом потоке
 
-        int currentTab = currentTabPosition.getValue() != null ? currentTabPosition.getValue() : 0;
-        List<MoveItem> originalList;
-        MutableLiveData<List<MoveItem>> targetFilteredList;
+            List<MoveItem> currentFormirovanList = _originalFormirovanList.getValue();
 
-        String sender, movementNumber, recipient, assembler, priority, receiver;
-        Boolean cpsChecked, availabilityChecked;
 
-        if (currentTab == 0) { // Сформирован
-            originalList = _originalFormirovanList.getValue();
-            targetFilteredList = _filteredFormirovanList;
-            sender = formirovanSenderFilter.getValue();
-            movementNumber = formirovanMovementNumberFilter.getValue();
-            recipient = formirovanRecipientFilter.getValue();
-            assembler = formirovanAssemblerFilter.getValue();
-            priority = formirovanPriorityFilter.getValue();
-            receiver = formirovanReceiverFilter.getValue();
-            cpsChecked = formirovanCpsChecked.getValue();
-            availabilityChecked = formirovanAvailabilityChecked.getValue();
-        } else { // Комплектуется
-            originalList = _originalKomplektuetsaList.getValue();
-            targetFilteredList = _filteredKomplektuetsaList;
-            sender = komplektuetsaSenderFilter.getValue();
-            movementNumber = komplektuetsaMovementNumberFilter.getValue();
-            recipient = komplektuetsaRecipientFilter.getValue();
-            assembler = komplektuetsaAssemblerFilter.getValue();
-            priority = komplektuetsaPriorityFilter.getValue();
-            receiver = komplektuetsaReceiverFilter.getValue();
-            cpsChecked = komplektuetsaCpsChecked.getValue();
-            availabilityChecked = komplektuetsaAvailabilityChecked.getValue();
-        }
+            List<MoveItem> currentfilteredFormirovan = applyFiltersToList(
+                    currentFormirovanList != null ? new ArrayList<>(currentFormirovanList): new ArrayList<>(), // Передаем копию
+                    formirovanSenderFilter.getValue(),
+                    formirovanMovementNumberFilter.getValue(),
+                    formirovanRecipientFilter.getValue(),
+                    formirovanAssemblerFilter.getValue(),
+                    formirovanPriorityFilter.getValue(),
+                    formirovanReceiverFilter.getValue(),
+                    formirovanCpsChecked.getValue(),
+                    formirovanAvailabilityChecked.getValue()
+            );
+            _filteredFormirovanList.postValue(currentfilteredFormirovan);
 
-        if (originalList == null) {
-            originalList = new ArrayList<>();
-        }
+            List<MoveItem> currentKomplektuetsaList = _originalKomplektuetsaList.getValue();
 
-        List<MoveItem> filteredList = applyFiltersToList(
-                new ArrayList<>(originalList), // Передаем копию для фильтрации
-                sender, movementNumber, recipient, assembler, priority, receiver,
-                cpsChecked, availabilityChecked
-        );
+            List<MoveItem> currentfilteredKomplektuetsa = applyFiltersToList(
+                    currentKomplektuetsaList != null ? new ArrayList<>(currentKomplektuetsaList): new ArrayList<>(),
+                    komplektuetsaSenderFilter.getValue(),
+                    komplektuetsaMovementNumberFilter.getValue(),
+                    komplektuetsaRecipientFilter.getValue(),
+                    komplektuetsaAssemblerFilter.getValue(),
+                    komplektuetsaPriorityFilter.getValue(),
+                    komplektuetsaReceiverFilter.getValue(),
+                    komplektuetsaCpsChecked.getValue(),
+                    komplektuetsaAvailabilityChecked.getValue()
+            );
+            _filteredKomplektuetsaList.postValue(currentfilteredKomplektuetsa);
 
-        // Обновляем LiveData отфильтрованного списка
-        targetFilteredList.setValue(filteredList);
 
-        // Обновляем индикатор активных фильтров
-        updateIsAnyFilterActive();
+            updateIsAnyFilterActive();
+        });
     }
 
     private void updateIsAnyFilterActive() {
@@ -426,8 +437,8 @@ public class MoveListViewModel extends ViewModel {
                        isFilterApplied(formirovanAssemblerFilter.getValue()) ||
                        isFilterPriorityApplied(formirovanPriorityFilter.getValue()) ||
                        isFilterApplied(formirovanReceiverFilter.getValue()) ||
-                       (formirovanCpsChecked.getValue() != null && formirovanCpsChecked.getValue()) ||
-                       (formirovanAvailabilityChecked.getValue() != null && formirovanAvailabilityChecked.getValue());
+                       formirovanCpsChecked.getValue() == false  ||
+                       formirovanAvailabilityChecked.getValue() == false;
         } else { // Комплектуется
             isActive = isFilterApplied(komplektuetsaSenderFilter.getValue()) ||
                        isFilterApplied(komplektuetsaMovementNumberFilter.getValue()) ||
@@ -435,10 +446,10 @@ public class MoveListViewModel extends ViewModel {
                        isFilterApplied(komplektuetsaAssemblerFilter.getValue()) ||
                        isFilterPriorityApplied(komplektuetsaPriorityFilter.getValue()) ||
                        isFilterApplied(komplektuetsaReceiverFilter.getValue()) ||
-                       (komplektuetsaCpsChecked.getValue() != null && komplektuetsaCpsChecked.getValue()) ||
-                       (komplektuetsaAvailabilityChecked.getValue() != null && komplektuetsaAvailabilityChecked.getValue());
+                       komplektuetsaCpsChecked.getValue() == false  ||
+                       komplektuetsaAvailabilityChecked.getValue() == false ;
         }
-        _isAnyFilterActiveLive.setValue(isActive);
+        _isAnyFilterActiveLive.postValue(isActive); // Используем postValue для безопасности потоков
     }
 
     // Вспомогательный метод для проверки, применен ли текстовый фильтр
@@ -557,136 +568,161 @@ public class MoveListViewModel extends ViewModel {
      */
     public void moveItems(List<MoveItem> itemsToMove, String currentFragmentState, String targetState) {
         if (itemsToMove == null || itemsToMove.isEmpty()) {
-            _moveOperationMessage.postValue("Нет элементов для перемещения.");
+            _showToastEvent.setValue(new SingleEvent<>("Нет элементов для перемещения."));
             return;
         }
 
         List<MoveItem> currentOriginalFormirovanList = new ArrayList<>(_originalFormirovanList.getValue() != null ? _originalFormirovanList.getValue() : Collections.emptyList());
         List<MoveItem> currentOriginalKomplektuetsaList = new ArrayList<>(_originalKomplektuetsaList.getValue() != null ? _originalKomplektuetsaList.getValue() : Collections.emptyList());
 
-        List<MoveItem> movedItemsCopy = new ArrayList<>(); // Для сохранения состояния отмены
+        List<MovedItemDataForUndo> movedItemsForUndo = new ArrayList<>();
+        List<MoveItem> itemsActuallyMoved = new ArrayList<>(); // Элементы, которые будут добавлены в целевой список
 
-        for (MoveItem item : itemsToMove) {
-            movedItemsCopy.add(item); // Сохраняем копию для отмены
+        List<MoveItem> sourceListReference;
+        List<MoveItem> destinationListReference;
+        MutableLiveData<List<MoveItem>> sourceLiveData;
+        MutableLiveData<List<MoveItem>> destinationLiveData;
 
-            boolean removedSuccessfully = false; // Флаг для отслеживания успешного удаления
-
-            if (STATUS_FORMIROVAN.equals(currentFragmentState) && STATUS_KOMPLEKTUETSA.equals(targetState)) {
-                removedSuccessfully = currentOriginalFormirovanList.removeIf(
-                    listItem -> listItem.getMovementId() != null &&
-                                item.getMovementId() != null &&
-                                listItem.getMovementId().equals(item.getMovementId())
-                );
-                if (removedSuccessfully) {
-                    item.setSigningStatus(STATUS_KOMPLEKTUETSA); // Меняем статус ПОСЛЕ успешного удаления
-                    currentOriginalKomplektuetsaList.add(item);
-                }
-            } else if (STATUS_KOMPLEKTUETSA.equals(currentFragmentState) && STATUS_FORMIROVAN.equals(targetState)) {
-                removedSuccessfully = currentOriginalKomplektuetsaList.removeIf(
-                    listItem -> listItem.getMovementId() != null &&
-                                item.getMovementId() != null &&
-                                listItem.getMovementId().equals(item.getMovementId())
-                );
-                if (removedSuccessfully) {
-                    item.setSigningStatus(STATUS_FORMIROVAN); // Меняем статус ПОСЛЕ успешного удаления
-                    currentOriginalFormirovanList.add(item);
-                }
-            }
-            // Если removedSuccessfully == false, элемент не был найден в ожидаемом списке.
-            // Можно добавить логгирование или другую обработку, если это необходимо.
-            // В текущей логике, если элемент не найден, его статус не меняется и он не перемещается.
+        if (STATUS_FORMIROVAN.equals(currentFragmentState)) {
+            sourceListReference = currentOriginalFormirovanList;
+            destinationListReference = currentOriginalKomplektuetsaList;
+            sourceLiveData = _originalFormirovanList;
+            destinationLiveData = _originalKomplektuetsaList;
+        } else {
+            sourceListReference = currentOriginalKomplektuetsaList;
+            destinationListReference = currentOriginalFormirovanList;
+            sourceLiveData = _originalKomplektuetsaList;
+            destinationLiveData = _originalFormirovanList;
         }
 
-        sortByPriority(currentOriginalFormirovanList);
-        sortByPriority(currentOriginalKomplektuetsaList);
+        // Создаем список элементов для удаления с их индексами, чтобы правильно их удалить
+        // Сначала собираем все элементы, которые нужно переместить, с их ОРИГИНАЛЬНЫМИ индексами из ИСХОДНОГО списка
+        List<android.util.Pair<Integer, MoveItem>> itemsToRemoveWithIndexes = new ArrayList<>();
+        for (MoveItem itemToMove : itemsToMove) {
+            for (int i = 0; i < sourceListReference.size(); i++) {
+                if (sourceListReference.get(i).getMovementId().equals(itemToMove.getMovementId())) {
+                    itemsToRemoveWithIndexes.add(new android.util.Pair<>(i, sourceListReference.get(i)));
+                    break;
+                }
+            }
+        }
 
-        _originalFormirovanList.postValue(currentOriginalFormirovanList);
-        _originalKomplektuetsaList.postValue(currentOriginalKomplektuetsaList);
+        // Сортируем по индексам в ОБРАТНОМ порядке для корректного удаления
+        // без смещения индексов для последующих удаляемых элементов.
+        itemsToRemoveWithIndexes.sort((p1, p2) -> Integer.compare(p2.first, p1.first));
 
-        // Сохраняем состояние для возможной отмены
-        _lastMovedItems.postValue(movedItemsCopy); // Сохраняем КОПИИ оригинальных состояний
-        _lastMoveSourceState.postValue(currentFragmentState);
-        _lastMoveTargetState.postValue(targetState);
-        _undoAvailable.postValue(true);
+        for (android.util.Pair<Integer, MoveItem> pair : itemsToRemoveWithIndexes) {
+            int originalIndex = pair.first;
+            MoveItem itemFromSourceList = pair.second; // Это элемент из оригинального списка
 
-        triggerFilterRecalculation(); // Обновляем фильтрованные списки
+            // Сохраняем для отмены (копию оригинального элемента и его индекс)
+            movedItemsForUndo.add(new MovedItemDataForUndo(itemFromSourceList, originalIndex));
+            
+            sourceListReference.remove(originalIndex); // Удаляем из исходного списка по ранее найденному индексу
 
-        String message = "Перемещено " + itemsToMove.size() + " элементов в " + targetState ;
-        _moveOperationMessage.postValue(message);
+            // Модифицируем статус элемента, который был взят из sourceListReference
+            itemFromSourceList.setSigningStatus(targetState);
+            itemsActuallyMoved.add(itemFromSourceList); // Добавляем измененный элемент для последующего добавления в целевой список
+        }
+        
+        // Добавляем все перемещенные (и измененные) элементы в целевой список
+        destinationListReference.addAll(itemsActuallyMoved);
+        // Сортируем только целевой список, так как исходный список изменился только удалениями
+        sortByPriority(destinationListReference);
+
+        // Обновляем LiveData
+        sourceLiveData.setValue(new ArrayList<>(sourceListReference)); 
+        destinationLiveData.setValue(new ArrayList<>(destinationListReference));
+
+        _undoStack.setValue(movedItemsForUndo); // Сохраняем данные для отмены
+        _lastMoveSourceState.setValue(currentFragmentState); // Откуда переместили
+        _lastMoveTargetState.setValue(targetState);     // Куда переместили
+
+        triggerFilterRecalculation();
+        String message = "Перемещено " + itemsToMove.size() + " элементов в " + targetState;
+        _showUndoSnackbarEvent.setValue(new SingleEvent<>(new SnackbarEvent(message, true)));
     }
 
     /**
      * Отменяет последнее действие перемещения элементов.
      */
     public void undoMove() {
-        List<MoveItem> itemsToRestore = _lastMovedItems.getValue();
-        String sourceState = _lastMoveSourceState.getValue(); // Куда вернуть (бывший currentFragmentState)
-        String targetState = _lastMoveTargetState.getValue(); // Откуда вернуть (бывший targetState)
+        List<MovedItemDataForUndo> itemsToRestoreData = _undoStack.getValue();
+        String originalSourceState = _lastMoveSourceState.getValue(); // Куда восстанавливаем (был источником)
+        String originalTargetState = _lastMoveTargetState.getValue(); // Откуда удаляем (был целью)
 
-        if (itemsToRestore == null || itemsToRestore.isEmpty() || sourceState == null || targetState == null) {
-            _moveOperationMessage.postValue("Нет операции для отмены.");
+        // Log.d("DEBUG_UPDATE", "[ViewModel.undoMove] START. Items to restore: " + (itemsToRestoreData != null ? itemsToRestoreData.size() : "null") + ", To Source: " + originalSourceState + ", From Target: " + originalTargetState);
+
+        if (itemsToRestoreData == null || itemsToRestoreData.isEmpty() || originalSourceState == null || originalTargetState == null) {
+            _showToastEvent.setValue(new SingleEvent<>("Нет операции для отмены."));
             return;
         }
 
         List<MoveItem> currentOriginalFormirovanList = new ArrayList<>(_originalFormirovanList.getValue() != null ? _originalFormirovanList.getValue() : Collections.emptyList());
         List<MoveItem> currentOriginalKomplektuetsaList = new ArrayList<>(_originalKomplektuetsaList.getValue() != null ? _originalKomplektuetsaList.getValue() : Collections.emptyList());
 
-        // Логика восстановления обратна moveItems
-        for (MoveItem originalItemState : itemsToRestore) {
-             // Находим актуальный элемент в текущих списках по ID или уникальному ключу, чтобы обновить его.
-             // Предполагаем, что MoveItem имеет getId() или аналогичный уникальный идентификатор.
-             // Если нет, то нужно будет найти по совпадению других полей или передавать актуальные объекты.
-             // Для простоты, сейчас будем предполагать, что мы можем найти и удалить/добавить сам объект.
-             // Однако, правильнее было бы найти объект по ID и обновить его поля из originalItemState.
+        List<MoveItem> listToRestoreTo;  // Список, КУДА будем восстанавливать элементы
+        List<MoveItem> listToRemoveFrom; // Список, ОТКУДА будем удалять элементы
+        MutableLiveData<List<MoveItem>> liveDataToRestoreTo;
+        MutableLiveData<List<MoveItem>> liveDataToRemoveFrom;
 
-            if (STATUS_FORMIROVAN.equals(sourceState)) { // Элементы были в "Сформирован", вернулись туда
-                // Удаляем из "Комплектуется" (куда они были перемещены)
-                // boolean removed = currentOriginalKomplektuetsaList.removeIf(item -> item.getInternalDocumentNumber().equals(originalItemState.getInternalDocumentNumber())); // Пример уникального идентификатора
-                boolean removed = currentOriginalKomplektuetsaList.removeIf(
-                    listItem -> listItem.getMovementId() != null &&
-                                originalItemState.getMovementId() != null &&
-                                listItem.getMovementId().equals(originalItemState.getMovementId())
-                );
-                if(removed){
-                    currentOriginalFormirovanList.add(originalItemState); // Добавляем оригинальное состояние
-                }
-            } else if (STATUS_KOMPLEKTUETSA.equals(sourceState)) { // Элементы были в "Комплектуется", вернулись туда
-                // Удаляем из "Сформирован"
-                // boolean removed = currentOriginalFormirovanList.removeIf(item -> item.getInternalDocumentNumber().equals(originalItemState.getInternalDocumentNumber())); // Пример уникального идентификатора
-                 boolean removed = currentOriginalFormirovanList.removeIf(
-                    listItem -> listItem.getMovementId() != null &&
-                                originalItemState.getMovementId() != null &&
-                                listItem.getMovementId().equals(originalItemState.getMovementId())
-                 );
-                 if(removed){
-                    currentOriginalKomplektuetsaList.add(originalItemState); // Добавляем оригинальное состояние
-                 }
+        if (STATUS_FORMIROVAN.equals(originalSourceState)) { // Восстанавливаем в "Сформирован"
+            listToRestoreTo = currentOriginalFormirovanList;
+            listToRemoveFrom = currentOriginalKomplektuetsaList;
+            liveDataToRestoreTo = _originalFormirovanList;
+            liveDataToRemoveFrom = _originalKomplektuetsaList;
+        } else { // Восстанавливаем в "Комплектуется"
+            listToRestoreTo = currentOriginalKomplektuetsaList;
+            listToRemoveFrom = currentOriginalFormirovanList;
+            liveDataToRestoreTo = _originalKomplektuetsaList;
+            liveDataToRemoveFrom = _originalFormirovanList;
+        }
+
+        // Сначала удаляем элементы из списка, куда они были перемещены (originalTargetState)
+        // Используем ID из originalItemState для поиска в listToRemoveFrom
+        for (MovedItemDataForUndo data : itemsToRestoreData) {
+            listToRemoveFrom.removeIf(itemInTargetList -> 
+                itemInTargetList.getMovementId().equals(data.originalItemState.getMovementId()));
+        }
+
+        // Теперь восстанавливаем элементы в исходный список на их оригинальные позиции.
+        // Сортируем itemsToRestoreData по originalIndex в обычном порядке, чтобы вставлять последовательно.
+        itemsToRestoreData.sort(Comparator.comparingInt(data -> data.originalIndex));
+
+        for (MovedItemDataForUndo data : itemsToRestoreData) {
+            // data.originalItemState уже имеет правильный (старый) статус, так как мы создали его копию.
+            // Убедимся, что статус явно установлен на тот, который был в originalSourceState (на всякий случай, хотя копия должна быть верной)
+            data.originalItemState.setSigningStatus(originalSourceState);
+
+            if (data.originalIndex >= 0 && data.originalIndex <= listToRestoreTo.size()) {
+                listToRestoreTo.add(data.originalIndex, data.originalItemState);
+            } else {
+                // Если индекс некорректен (маловероятно, но для безопасности), добавляем в конец
+                listToRestoreTo.add(data.originalItemState);
             }
         }
 
-        sortByPriority(currentOriginalFormirovanList);
-        sortByPriority(currentOriginalKomplektuetsaList);
+        // После восстановления на точные места, НЕ НУЖНО вызывать sortByPriority для listToRestoreTo,
+        // так как это нарушит восстановленный порядок.
 
-        _originalFormirovanList.postValue(currentOriginalFormirovanList);
-        _originalKomplektuetsaList.postValue(currentOriginalKomplektuetsaList);
+        liveDataToRestoreTo.setValue(new ArrayList<>(listToRestoreTo));
+        liveDataToRemoveFrom.setValue(new ArrayList<>(listToRemoveFrom));
 
-        // Сбрасываем состояние отмены
-        _undoAvailable.postValue(false);
-        _lastMovedItems.postValue(null);
-        _lastMoveSourceState.postValue(null);
-        _lastMoveTargetState.postValue(null);
+        _undoStack.setValue(null); // Очищаем стек отмены
+        _lastMoveSourceState.setValue(null);
+        _lastMoveTargetState.setValue(null);
 
         triggerFilterRecalculation();
-        _moveOperationMessage.postValue("Перемещение отменено. Восстановлено " + itemsToRestore.size() + " элементов.");
+        _showToastEvent.setValue(new SingleEvent<>("Перемещение отменено. Восстановлено " + itemsToRestoreData.size() + " элементов."));
     }
 
     /**
      * Очищает сообщение об операции, чтобы оно не показывалось повторно (например, при повороте экрана).
      * Вызывать из Activity/Fragment после того, как сообщение было показано.
      */
-    public void clearMoveOperationMessage() {
-        _moveOperationMessage.postValue(null);
-    }
+    // public void clearMoveOperationMessage() { // МЕТОД УДАЛЕН
+    //     // _moveOperationMessage.postValue(null);
+    // }
 
     // --- Логика проверки обновлений данных и управления кнопкой Refresh ---
 
@@ -800,16 +836,19 @@ public class MoveListViewModel extends ViewModel {
     }
 
     public void applyPendingUpdates() {
-        _isLoading.postValue(true);
+        // _isLoading.postValue(true);
+        _isLoading.setValue(true);
         boolean updated = false;
         if (hasFreshFormirovanData && freshFormirovanData != null) {
-            _originalFormirovanList.postValue(new ArrayList<>(freshFormirovanData)); // создаем копию
+            // _originalFormirovanList.postValue(new ArrayList<>(freshFormirovanData)); // создаем копию
+            _originalFormirovanList.setValue(new ArrayList<>(freshFormirovanData)); // создаем копию
             hasFreshFormirovanData = false;
             freshFormirovanData = null;
             updated = true;
         }
         if (hasFreshKomplektuetsaData && freshKomplektuetsaData != null) {
-            _originalKomplektuetsaList.postValue(new ArrayList<>(freshKomplektuetsaData)); // создаем копию
+            // _originalKomplektuetsaList.postValue(new ArrayList<>(freshKomplektuetsaData)); // создаем копию
+            _originalKomplektuetsaList.setValue(new ArrayList<>(freshKomplektuetsaData)); // создаем копию
             hasFreshKomplektuetsaData = false;
             freshKomplektuetsaData = null;
             updated = true;
@@ -817,12 +856,16 @@ public class MoveListViewModel extends ViewModel {
 
         if (updated) {
             triggerFilterRecalculation(); // Уже вызывается при postValue на _original списки, но для явности
-            _moveOperationMessage.postValue("Данные обновлены.");
+            // _moveOperationMessage.postValue("Данные обновлены.");
+            _showToastEvent.postValue(new SingleEvent<>("Данные обновлены."));
         } else {
-            _moveOperationMessage.postValue("Нет доступных обновлений.");
+            // _moveOperationMessage.postValue("Нет доступных обновлений.");
+            _showToastEvent.postValue(new SingleEvent<>("Нет доступных обновлений."));
         }
-        _showRefreshButton.postValue(false);
-        _isLoading.postValue(false);
+        // _showRefreshButton.postValue(false);
+        _showRefreshButton.setValue(false);
+        // _isLoading.postValue(false);
+        _isLoading.setValue(false);
     }
 
     // --- Вспомогательные методы для сравнения списков (скопировано из MoveList_menu) ---
@@ -950,5 +993,10 @@ public class MoveListViewModel extends ViewModel {
     public void clearPrixodReturnData() {
         productsJsonDataFromPrixod = null;
         preserveEditedDataFromPrixod = false;
+    }
+
+    protected void onCleared() {
+        super.onCleared();
+        executorService.shutdown(); // Не забываем остановить ExecutorService
     }
 } 

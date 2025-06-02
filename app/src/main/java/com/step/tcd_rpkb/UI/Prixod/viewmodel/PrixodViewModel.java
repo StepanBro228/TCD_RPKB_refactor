@@ -1,5 +1,7 @@
 package com.step.tcd_rpkb.UI.Prixod.viewmodel;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -21,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections; // Для сортировки
 import java.util.Comparator; // Для сортировки
 import java.util.HashMap;
+import java.util.HashSet; // Добавляем HashSet
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -50,11 +53,7 @@ public class PrixodViewModel extends BaseViewModel {
     private final MutableLiveData<Event<String>> _errorLiveData = new MutableLiveData<>();
     public LiveData<Event<String>> errorLiveData = _errorLiveData;
 
-    private final MutableLiveData<String> _userFullNameLiveData = new MutableLiveData<>();
-    public LiveData<String> userFullNameLiveData = _userFullNameLiveData;
 
-    private final MutableLiveData<String> _userRoleLiveData = new MutableLiveData<>();
-    public LiveData<String> userRoleLiveData = _userRoleLiveData;
 
     private final MutableLiveData<Event<Integer>> _focusProductPositionLiveData = new MutableLiveData<>();
     public LiveData<Event<Integer>> focusProductPositionLiveData = _focusProductPositionLiveData;
@@ -82,14 +81,14 @@ public class PrixodViewModel extends BaseViewModel {
     public LiveData<Boolean> isAnyFilterActiveLiveData = _isAnyFilterActiveLiveData;
 
     // LiveData для состояния сортировки
-    private final MutableLiveData<SortCriteria> _sortCriteriaLiveData = new MutableLiveData<>(SortCriteria.NONE);
+    private final MutableLiveData<SortCriteria> _sortCriteriaLiveData = new MutableLiveData<>(SortCriteria.STORAGE);
     public LiveData<SortCriteria> sortCriteriaLiveData = _sortCriteriaLiveData;
 
     private final MutableLiveData<Boolean> _isSortAscendingLiveData = new MutableLiveData<>(true);
     public LiveData<Boolean> isSortAscendingLiveData = _isSortAscendingLiveData;
 
     // LiveData для хранения UUID продуктов с ошибками валидации
-    private final MutableLiveData<Set<String>> _validationErrorUuidsLiveData = new MutableLiveData<>(new java.util.HashSet<>());
+    private final MutableLiveData<Set<String>> _validationErrorUuidsLiveData = new MutableLiveData<>(new HashSet<>()); // Используем HashSet
     public LiveData<Set<String>> validationErrorUuidsLiveData = _validationErrorUuidsLiveData;
 
     private final MutableLiveData<Event<String>> _forceResetFiltersMessageLiveData = new MutableLiveData<>();
@@ -106,7 +105,7 @@ public class PrixodViewModel extends BaseViewModel {
         this.getUserUseCase = getUserUseCase;
         this.productMapper = productMapper;
         this.gson = gson;
-        loadUserData(); // Загружаем данные пользователя при инициализации
+       ; // Загружаем данные пользователя при инициализации
     }
 
     public void loadInitialData(String moveUuid, String productsJson, boolean preserveEditedData) {
@@ -117,7 +116,7 @@ public class PrixodViewModel extends BaseViewModel {
             return;
         }
         loadPrixodDocument(moveUuid, productsJson, preserveEditedData);
-        loadUserData(); // Загрузка данных пользователя
+
     }
 
     private void loadPrixodDocument(String moveUuid, String productsJson, boolean preserveEditedData) {
@@ -192,31 +191,10 @@ public class PrixodViewModel extends BaseViewModel {
         });
     }
 
-    private void loadUserData() {
-        // Пример загрузки данных пользователя
-        // getUserUseCase.execute(new RepositoryCallback<User>() {
-        //     @Override
-        //     public void onSuccess(User user) {
-        //         if (user != null) {
-        //             _userFullNameLiveData.setValue(user.getFullName());
-        //             _userRoleLiveData.setValue(user.getRole());
-        //         }
-        //     }
-        // 
-        //     @Override
-        //     public void onError(String message) {
-        //         // Обработка ошибки загрузки пользователя, если необходимо
-        //         _errorLiveData.setValue(new Event<>("Ошибка загрузки данных пользователя: " + message));
-        //     }
-        // });
-        // Временная заглушка, пока GetUserUseCase не настроен полностью
-        _userFullNameLiveData.setValue("Иванов Иван Иванович (Заглушка)");
-        _userRoleLiveData.setValue("Кладовщик (Заглушка)");
-    }
+
 
     public LiveData<Event<String>> getErrorLiveData() { return errorLiveData; }
-    public LiveData<String> getUserFullNameLiveData() { return userFullNameLiveData; }
-    public LiveData<String> getUserRoleLiveData() { return userRoleLiveData; }
+
     public LiveData<Event<Integer>> getFocusProductPositionLiveData() { return focusProductPositionLiveData; }
     public LiveData<Event<String>> getProductNotFoundForFocusEvent() { return productNotFoundForFocusEvent; }
     public LiveData<Event<String>> getForceResetFiltersMessageLiveData() { return _forceResetFiltersMessageLiveData; }
@@ -261,59 +239,64 @@ public class PrixodViewModel extends BaseViewModel {
         return -1;
     }
 
+    // Вспомогательный метод для поиска позиции продукта по Series UUID
+    private int findProductPositionBySeriesUuid(List<Product> productList, String seriesUuid) {
+        if (productList == null || seriesUuid == null || seriesUuid.isEmpty()) {
+            return -1;
+        }
+        for (int i = 0; i < productList.size(); i++) {
+            Product product = productList.get(i);
+            // Предполагается, что у Product есть метод getSeriesUuid()
+            if (product != null && seriesUuid.equals(product.getSeriesUuid())) { 
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public void processBarcodeData(String barcodeData) {
         Log.d("PrixodViewModel", "Обработка данных сканера: " + barcodeData);
-        String nomenclatureUuid = extractUUID(barcodeData);
+        final String seriesUuid = extractUUID(barcodeData); // Теперь это seriesUuid
 
-        if (nomenclatureUuid == null) {
-            Log.w("PrixodViewModel", "UUID не извлечен из данных сканера.");
-            _productNotFoundForFocusEvent.setValue(new Event<>("Некорректный QR-код. Товар не найден."));
-                        return;
-                    }
+        if (seriesUuid == null) {
+            Log.w("PrixodViewModel", "Series UUID не извлечен из данных сканера.");
+            new Handler(Looper.getMainLooper()).post(() -> _productNotFoundForFocusEvent.setValue(new Event<>("Некорректный QR-код. Товар не найден по серийному номеру.")));
+            return;
+        }
 
         List<Product> currentProductList = _productsLiveData.getValue();
-        if (currentProductList == null) { // Добавлена проверка на null
-            currentProductList = new ArrayList<>(); // Инициализация пустым списком, если null
+        if (currentProductList == null) {
+            currentProductList = new ArrayList<>();
         }
         
-        int position = findProductPositionByNomenclatureUuid(currentProductList, nomenclatureUuid);
+        int position = findProductPositionBySeriesUuid(currentProductList, seriesUuid);
 
         if (position != -1) {
-            Log.d("PrixodViewModel", "Товар найден по NomenclatureUuid: " + nomenclatureUuid + " на позиции: " + position);
-            _focusProductPositionLiveData.setValue(new Event<>(position));
+            Log.d("PrixodViewModel", "Товар найден по SeriesUuid: " + seriesUuid + " на позиции: " + position);
+            final int finalPosition = position;
+            new Handler(Looper.getMainLooper()).post(() -> _focusProductPositionLiveData.setValue(new Event<>(finalPosition)));
         } else {
-            Log.d("PrixodViewModel", "Товар НЕ найден по NomenclatureUuid: " + nomenclatureUuid + " в текущем списке.");
-            // Проверяем, активны ли фильтры
-            boolean filtersActive = Boolean.TRUE.equals(_isAnyFilterActiveLiveData.getValue()); // Безопасная проверка на null
+            Log.d("PrixodViewModel", "Товар НЕ найден по SeriesUuid: " + seriesUuid + " в текущем списке.");
+            boolean filtersActive = Boolean.TRUE.equals(_isAnyFilterActiveLiveData.getValue());
 
             if (filtersActive) {
-                Log.d("PrixodViewModel", "Фильтры активны. Сбрасываем фильтры и повторяем поиск.");
-                // Сбрасываем фильтры. Это вызовет обновление _productsLiveData.
-                // Повторный поиск будет в originalProductList, так как _productsLiveData обновится асинхронно.
-                String messageForUser = "Товар не найден с текущими фильтрами. Фильтры сброшены. Повторный поиск...";
-                _productNotFoundForFocusEvent.setValue(new Event<>(messageForUser)); // Уведомляем пользователя о сбросе
+                Log.d("PrixodViewModel", "Фильтры активны. Сбрасываем фильтры и повторяем поиск по SeriesUuid.");
+                new Handler(Looper.getMainLooper()).post(() -> _productNotFoundForFocusEvent.setValue(new Event<>("Товар не найден с текущими фильтрами. Фильтры сброшены. Повторный поиск...")));
                 
-                resetAllFilters(); // Этот метод обновит _productsLiveData до originalProductList и применит сортировку
+                resetAllFilters(); 
 
-                // Ищем в originalProductList, так как он теперь основа для _productsLiveData после сброса
-                int positionAfterReset = findProductPositionByNomenclatureUuid(originalProductList, nomenclatureUuid);
+                int positionAfterReset = findProductPositionBySeriesUuid(originalProductList, seriesUuid);
 
                 if (positionAfterReset != -1) {
-                    Log.d("PrixodViewModel", "Товар найден в originalProductList после сброса фильтров на позиции: " + positionAfterReset);
-                    // Поскольку resetAllFilters() вызовет applyFiltersAndSort(), который обновит _productsLiveData,
-                    // позиция в originalProductList должна совпадать с позицией в _productsLiveData (если сортировка не изменила порядок критично)
-                    // Если сортировка может сильно менять порядок, то нужно дождаться обновления LiveData.
-                    // Для простоты пока предполагаем, что позиция будет корректной или достаточно близкой.
-                    _focusProductPositionLiveData.setValue(new Event<>(positionAfterReset));
-                     // Можно добавить дополнительное сообщение, что товар найден после сброса.
-                    // _productNotFoundForFocusEvent.setValue(new Event<>("Фильтры сброшены. Товар найден."));
+                    Log.d("PrixodViewModel", "Товар найден по SeriesUuid в originalProductList после сброса фильтров на позиции: " + positionAfterReset);
+                    new Handler(Looper.getMainLooper()).post(() -> _focusProductPositionLiveData.setValue(new Event<>(positionAfterReset)));
                 } else {
-                    Log.d("PrixodViewModel", "Товар не найден даже после сброса фильтров.");
-                    _productNotFoundForFocusEvent.setValue(new Event<>("Товар с кодом " + nomenclatureUuid + " не найден."));
+                    Log.d("PrixodViewModel", "Товар с SeriesUuid " + seriesUuid + " не найден даже после сброса фильтров.");
+                    new Handler(Looper.getMainLooper()).post(() -> _productNotFoundForFocusEvent.setValue(new Event<>("Товар с серийным номером " + seriesUuid + " не найден.")));
                 }
             } else {
-                Log.d("PrixodViewModel", "Фильтры не активны. Товар не найден.");
-                _productNotFoundForFocusEvent.setValue(new Event<>("Товар с кодом " + nomenclatureUuid + " не найден."));
+                Log.d("PrixodViewModel", "Фильтры не активны. Товар с SeriesUuid " + seriesUuid + " не найден.");
+                new Handler(Looper.getMainLooper()).post(() -> _productNotFoundForFocusEvent.setValue(new Event<>("Товар с серийным номером " + seriesUuid + " не найден.")));
             }
         }
     }
@@ -361,8 +344,8 @@ public class PrixodViewModel extends BaseViewModel {
     }
     
     public void resetAllFiltersAndSort() {
-        resetAllFilters();
-        clearSort(); // applyFiltersAndSort() будет вызван в clearSort()
+        resetAllFilters(); // Сначала сбрасываем все фильтры
+        clearSort();
     }
 
     private void applyFiltersAndSort() {
@@ -474,16 +457,16 @@ public class PrixodViewModel extends BaseViewModel {
     }
 
     /**
-     * Внутренний метод для обновления значения 'taken' и состояния ошибок.
-     * @param nomenclatureUuid UUID номенклатуры продукта для обновления.
+     * Обновляет значение 'taken' для продукта и управляет списком ошибок.
+     * @param nomenclatureUuid UUID продукта.
      * @param newTakenValue Новое значение 'taken'.
-     * @param isValidПришлоОтАдаптера Флаг валидности, полученный от адаптера.
-     * @return true, если после всех проверок ViewModel считает данные валидными для этого продукта, иначе false.
+     * @param isValidFromAdapter Валидность, сообщенная адаптером (true, если адаптер считает значение корректным).
+     * @return true, если значение 'taken' было успешно обновлено и считается валидным; false в противном случае.
      */
-    private boolean updateProductTakenValueInternal(String nomenclatureUuid, int newTakenValue, boolean isValidПришлоОтАдаптера) {
+    private boolean updateProductTakenValueAndErrorState(String nomenclatureUuid, int newTakenValue, boolean isValidFromAdapter) {
         if (originalProductList == null || nomenclatureUuid == null) {
-            Log.e("PrixodViewModel", "originalProductList is null or nomenclatureUuid is null in updateProductTakenValueInternal");
-            return false; // Считаем невалидным, так как не можем обработать
+            Log.e("PrixodViewModel", "originalProductList или nomenclatureUuid is null в updateProductTakenValueAndErrorState");
+            return false;
         }
 
         Product productToUpdate = null;
@@ -494,103 +477,98 @@ public class PrixodViewModel extends BaseViewModel {
             }
         }
 
-        Set<String> currentErrors = new java.util.HashSet<>(_validationErrorUuidsLiveData.getValue() != null ? _validationErrorUuidsLiveData.getValue() : new java.util.HashSet<>());
-        boolean isDataConsideredValidByViewModel = false;
+        Set<String> currentErrors = new HashSet<>(_validationErrorUuidsLiveData.getValue() != null ? _validationErrorUuidsLiveData.getValue() : new HashSet<>());
+        boolean isConsideredValidByViewModel = false;
 
         if (productToUpdate != null) {
-            // Основная логика валидации ViewModel
+            // Логика валидации ViewModel: значение должно быть >= 0 и <= quantity
             if (newTakenValue >= 0 && newTakenValue <= productToUpdate.getQuantity()) {
                 productToUpdate.setTaken(newTakenValue);
                 currentErrors.remove(nomenclatureUuid); 
-                isDataConsideredValidByViewModel = true;
-                Log.d("PrixodViewModel", "Product UUID: " + nomenclatureUuid + " updated. Taken: " + newTakenValue + ". Valid by ViewModel.");
+                isConsideredValidByViewModel = true;
+                Log.d("PrixodViewModel", "Продукт UUID: " + nomenclatureUuid + " обновлен. Taken: " + newTakenValue + ". Валидно по ViewModel.");
             } else {
-                // Значение невалидно по бизнес-логике ViewModel (например, выходит за пределы quantity)
+                // Невалидно по бизнес-логике ViewModel (например, выходит за пределы quantity)
+                // Не меняем productToUpdate.setTaken(newTakenValue); здесь, чтобы не сохранять невалидное значение
                 currentErrors.add(nomenclatureUuid);
-                // productToUpdate.setTaken(productToUpdate.getTaken()); // Оставляем старое значение 'taken' или сбрасываем, если нужно
-                Log.w("PrixodViewModel", "Product UUID: " + nomenclatureUuid + " value " + newTakenValue + " is out of bounds (0-" + productToUpdate.getQuantity() + "). Marked as error by ViewModel.");
-                isDataConsideredValidByViewModel = false;
+                Log.w("PrixodViewModel", "Продукт UUID: " + nomenclatureUuid + " значение " + newTakenValue + " вне допустимых пределов (0-" + productToUpdate.getQuantity() + "). Помечено как ошибка ViewModel.");
+                isConsideredValidByViewModel = false;
             }
             
-            // Дополнительно учитываем флаг от адаптера, если он сказал, что невалидно, то это точно ошибка.
-            // (хотя основная логика валидации уже выше)
-            if (!isValidПришлоОтАдаптера && isDataConsideredValidByViewModel) {
-                // Случай, когда ViewModel посчитала валидным, но адаптер почему-то нет.
-                // Это странно, но для безопасности пометим как ошибку.
+            // Если адаптер сообщил о невалидности, это приоритет, даже если ViewModel считает валидным.
+            if (!isValidFromAdapter && isConsideredValidByViewModel) {
                 currentErrors.add(nomenclatureUuid);
-                Log.w("PrixodViewModel", "Product UUID: " + nomenclatureUuid + " was valid by ViewModel, but adapter reported invalid. Marked as error.");
-                isDataConsideredValidByViewModel = false;
+                Log.w("PrixodViewModel", "Продукт UUID: " + nomenclatureUuid + " был валиден по ViewModel, но адаптер сообщил о невалидности. Помечено как ошибка.");
+                isConsideredValidByViewModel = false; // Окончательное решение - невалидно
             }
 
             _validationErrorUuidsLiveData.setValue(currentErrors);
-            // applyFiltersAndSort(); // Обновляем LiveData для UI - будет вызван из handleProductDataConfirmation
         } else {
-            Log.e("PrixodViewModel", "Product with UUID: " + nomenclatureUuid + " not found in originalProductList.");
+            Log.e("PrixodViewModel", "Продукт с UUID: " + nomenclatureUuid + " не найден в originalProductList.");
             return false; // Товар не найден, невалидно
         }
-        return isDataConsideredValidByViewModel;
+        return isConsideredValidByViewModel;
     }
     
-    // Старый метод updateProductTakenValue можно удалить или сделать приватным, если он больше не нужен извне.
-    // Для примера, переименуем его в updateProductTakenValueInternal и сделаем приватным.
-    // public void updateProductTakenValue(String nomenclatureUuid, int newTakenValue, boolean isValid) { ... }
 
     public void handleProductDataConfirmation(String nomenclatureUuid, int newTakenValue, boolean isValidFromAdapter, boolean byEnterKey, int currentPositionInAdapter) {
-        Log.d("PrixodViewModel", "Handling data confirmation for UUID: " + nomenclatureUuid + 
-                           ", value: " + newTakenValue + ", isValidFromAdapter: " + isValidFromAdapter + 
-                           ", byEnterKey: " + byEnterKey + ", position: " + currentPositionInAdapter);
+        Log.d("PrixodViewModel", "Обработка подтверждения данных для UUID: " + nomenclatureUuid + 
+                           ", значение: " + newTakenValue + ", isValidFromAdapter: " + isValidFromAdapter + 
+                           ", byEnterKey: " + byEnterKey + ", позиция: " + currentPositionInAdapter);
 
-        boolean isDataValidByViewModel = updateProductTakenValueInternal(nomenclatureUuid, newTakenValue, isValidFromAdapter);
+        boolean isDataValidByViewModel = updateProductTakenValueAndErrorState(nomenclatureUuid, newTakenValue, isValidFromAdapter);
         applyFiltersAndSort(); // Обновляем список в UI после изменения данных/ошибок
 
-        if (byEnterKey && isDataValidByViewModel) {
+        if (!isDataValidByViewModel) {
+            // Если данные НЕ валидны, фокус должен остаться на текущем элементе.
+            // Адаптер уже должен был показать анимацию тряски и фон ошибки.
+            // Мы просто не переводим фокус.
+            Log.d("PrixodViewModel", "Данные не валидны для UUID: " + nomenclatureUuid + ". Фокус остается на текущем элементе.");
+            // Можно дополнительно отправить событие, если нужно специфическое поведение UI при ошибке и Enter.
+            // Например, _forceShakeEvent.setValue(new Event<>(nomenclatureUuid));
+            return; // Прерываем дальнейшую обработку перехода фокуса
+        }
+
+        // Если данные валидны и был нажат Enter
+        if (byEnterKey) {
+            // Откладываем установку _focusProductPositionLiveData, чтобы RecyclerView успел обработать notifyDataSetChanged
+            new Handler(Looper.getMainLooper()).post(() -> {
             List<Product> currentDisplayedProducts = _productsLiveData.getValue();
             if (currentDisplayedProducts != null && !currentDisplayedProducts.isEmpty()) {
-                int nextPosition = currentPositionInAdapter + 1;
+                    // Ищем текущий продукт в ОТОБРАЖАЕМОМ списке, чтобы найти его актуальный индекс
+                    int currentIndexInDisplayedList = -1;
+                    for(int i=0; i < currentDisplayedProducts.size(); i++){
+                        if(nomenclatureUuid.equals(currentDisplayedProducts.get(i).getNomenclatureUuid())){
+                            currentIndexInDisplayedList = i;
+                            break;
+                        }
+                    }
+
+                    if (currentIndexInDisplayedList != -1) {
+                        int nextPosition = currentIndexInDisplayedList + 1;
                 if (nextPosition < currentDisplayedProducts.size()) {
-                    // Проверяем, что следующий элемент не тот же самый (маловероятно, но для безопасности)
-                    // Product nextProduct = currentDisplayedProducts.get(nextPosition);
-                    // if (!nextProduct.getNomenclatureUuid().equals(nomenclatureUuid)) { ... }
-                    Log.d("PrixodViewModel", "Enter key pressed, data valid. Focusing next item at position: " + nextPosition);
+                            Log.d("PrixodViewModel", "Нажат Enter, данные валидны. Фокус на следующий элемент на позиции: " + nextPosition + " (posted)");
                     _focusProductPositionLiveData.setValue(new Event<>(nextPosition));
+                        } else {
+                            Log.d("PrixodViewModel", "Нажат Enter на последнем элементе. Следующего элемента нет. (posted)");
+                            // Можно инициировать снятие фокуса с RecyclerView или другое действие
+                        }
+                    } else {
+                         Log.w("PrixodViewModel", "Нажат Enter, но текущий продукт UUID: " + nomenclatureUuid + " не найден в отображаемом списке. Невозможно определить следующий фокус. (posted)");
+                    }
                 } else {
-                    // Это был последний элемент в списке
-                    Log.d("PrixodViewModel", "Enter key pressed on the last item. No next item to focus.");
-                    // Можно инициировать снятие фокуса с RecyclerView или другое действие
-                    // _clearFocusEvent.setValue(new Event<>(true)); // Пример нового LiveData для такого события
+                     Log.w("PrixodViewModel", "Нажат Enter, но текущий список продуктов null или пуст. Невозможно определить следующий фокус. (posted)");
                 }
-            } else {
-                 Log.w("PrixodViewModel", "Enter key pressed, but current product list is null or empty. Cannot determine next focus.");
-            }
-        } else if (byEnterKey && !isDataValidByViewModel) {
-            // Если Enter нажат, но данные не валидны, фокус должен остаться на текущем элементе с ошибкой.
-            // _focusProductPositionLiveData НЕ должен обновляться, чтобы фокус не перескакивал.
-            // Activity/Adapter должен обеспечить, что фокус остается (или возвращается) на поле с ошибкой.
-            // Можно послать событие для принудительного "встряхивания" или подсветки, если нужно.
-             Log.d("PrixodViewModel", "Enter key pressed, but data is invalid. Focus should remain on current item: " + nomenclatureUuid);
-             // Можно даже явно запросить фокус на текущей позиции, если есть сомнения, что он останется.
-             // List<Product> currentDisplayedProducts = _productsLiveData.getValue();
-             // if (currentDisplayedProducts != null) {
-             //     int currentErrorItemOriginalIndex = findProductPositionByNomenclatureUuid(originalProductList, nomenclatureUuid); 
-             //     if(currentErrorItemOriginalIndex != -1) { // Если товар с ошибкой вообще существует
-             //         // Нужно найти его позицию в ТЕКУЩЕМ ОТОБРАЖАЕМОМ списке
-             //         int positionInDisplayedList = findProductPositionByNomenclatureUuid(currentDisplayedProducts, nomenclatureUuid);
-             //         if(positionInDisplayedList != -1) {
-             //             _focusProductPositionLiveData.setValue(new Event<>(positionInDisplayedList));
-             //         } else {
-             //             // Ошибка на элементе, который не отображается (скрыт фильтром). Тогда сбрасываем фильтры и фокусируемся.
-             //             requestFocusOnError(nomenclatureUuid);
-             //         }
-             //     }
-             // }
+            });
         }
-        // Если не byEnterKey, то фокус управляется стандартным поведением Android (потеря фокуса и т.д.)
+        // Если не byEnterKey и данные валидны, фокус управляется стандартным поведением Android 
+        // (потеря фокуса и т.д.), ViewModel не вмешивается.
     }
 
 
     public void requestFocusOnError(String errorUuid) {
         if (errorUuid == null || errorUuid.isEmpty() || originalProductList == null) {
-            _productNotFoundForFocusEvent.setValue(new Event<>("Не удалось найти товар для фокусировки (нет UUID или списка)."));
+            new Handler(Looper.getMainLooper()).post(() -> _productNotFoundForFocusEvent.setValue(new Event<>("Не удалось найти товар для фокусировки (нет UUID или списка).")));
             return;
         }
 
@@ -598,6 +576,7 @@ public class PrixodViewModel extends BaseViewModel {
         int positionInCurrentList = -1;
 
         // Сначала ищем в текущем отображаемом списке (_productsLiveData)
+        // Важно: requestFocusOnError вызывается с nomenclatureUuid (т.к. ошибки валидации привязаны к номенклатуре)
         List<Product> currentDisplayList = _productsLiveData.getValue();
         if (currentDisplayList != null) {
             positionInCurrentList = findProductPositionByNomenclatureUuid(currentDisplayList, errorUuid);
