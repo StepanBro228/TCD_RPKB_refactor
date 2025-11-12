@@ -1,17 +1,13 @@
 package com.step.tcd_rpkb.domain.repository;
 
 import com.step.tcd_rpkb.domain.model.Invoice;
+import com.step.tcd_rpkb.domain.model.MoveItem;
 import com.step.tcd_rpkb.domain.model.MoveResponse;
-// import java.util.List; // Если бы getMoveList возвращал List<MoveItem>
+import com.step.tcd_rpkb.domain.model.ChangeMoveStatusResult;
+import com.step.tcd_rpkb.domain.model.Product;
 
-// TODO: Адаптировать возвращаемые типы для асинхронной работы (например, Flow, Single, или использовать suspend функции с Kotlin)
+import java.util.List;
 
-// Используем тот же DataSourceCallback или определим свой для Repository уровня,
-// если нужна другая гранулярность ошибок или данных.
-// Для простоты пока можно использовать общий.
-// import com.step.tcd_rpkb.data.datasources.DataSourceCallback; 
-// Если DataSourceCallback останется в data, то domain не должен о нем знать.
-// Правильнее определить RepositoryCallback в domain.
 
 public interface MoveRepository {
 
@@ -20,10 +16,12 @@ public interface MoveRepository {
      * @param state Статус перемещения (может быть null или несколько статусов через разделитель).
      * @param startDate Начальная дата в формате YYYYMMDD (может быть null).
      * @param endDate Конечная дата в формате YYYYMMDD (может быть null).
+     * @param userGuid GUID пользователя для фильтрации доступности.
+     * @param useFilter Использовать ли фильтр по доступности (по умолчанию true).
      * @return MoveResponse содержащий список перемещений и метаданные.
      * @throws Exception Если происходит ошибка при загрузке данных.
      */
-    void getMoveList(String state, String startDate, String endDate, RepositoryCallback<MoveResponse> callback);
+    void getMoveList(String state, String startDate, String endDate, String userGuid, boolean useFilter, String nomenculature, String series, RepositoryCallback<MoveResponse> callback);
 
     /**
      * Получает детализированную информацию о документе перемещения.
@@ -33,4 +31,22 @@ public interface MoveRepository {
      */
     void getDocumentMove(String guid, RepositoryCallback<Invoice> callback);
 
+
+    /**
+     * Сменяет статус перемещения.
+     * @param guid GUID перемещения.
+     * @param targetState Целевой статус.
+     * @param userGuid GUID пользователя, выполняющего смену статуса.
+     * @param callback Callback для получения результата.
+     */
+    void changeMoveStatus(String guid, String targetState, String userGuid, RepositoryCallback<ChangeMoveStatusResult> callback);
+
+    /**
+     * Сохраняет данные перемещения в 1С перед сменой статуса.
+     * @param moveGuid GUID перемещения.
+     * @param userGuid GUID пользователя.
+     * @param products Список продуктов для сохранения.
+     * @param callback Callback для получения результата.
+     */
+    void saveMoveData(String moveGuid, String userGuid, List<Product> products, RepositoryCallback<Boolean> callback);
 } 

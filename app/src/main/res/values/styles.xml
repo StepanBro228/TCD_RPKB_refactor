@@ -1,37 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Стиль для заголовков групп в ExpandableListView -->
-    <style name="ExpandableListGroupStyle">
-        <item name="android:background">@drawable/expandable_group_background</item>
-        <item name="android:textSize">16sp</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:textColor">@color/colorWhite</item>
-        <item name="android:paddingStart">16dp</item>
-        <item name="android:paddingEnd">16dp</item>
-        <item name="android:paddingTop">12dp</item>
-        <item name="android:paddingBottom">12dp</item>
-        <item name="android:gravity">center_vertical</item>
-    </style>
 
-    <!-- Стиль для дочерних элементов в ExpandableListView -->
-    <style name="ExpandableListChildStyle">
-        <item name="android:background">@drawable/expandable_child_background</item>
-        <item name="android:paddingStart">16dp</item>
-        <item name="android:paddingEnd">16dp</item>
-        <item name="android:paddingTop">8dp</item>
-        <item name="android:paddingBottom">8dp</item>
-    </style>
 
-    <!-- Стиль для самого ExpandableListView без индикатора слева -->
-    <style name="NoIndicatorExpandableListView">
-        <item name="android:groupIndicator">@null</item>
-        <item name="android:divider">@color/colorDivider</item>
-        <item name="android:dividerHeight">6dp</item>
-        <item name="android:childDivider">@color/colorDivider</item>
-        <item name="android:background">@color/colorSurface</item>
-        <item name="android:paddingTop">8dp</item>
-        <item name="android:paddingBottom">8dp</item>
-    </style>
+
+
+
 
     <!-- Стиль для текстовых полей в фильтрах -->
     <style name="FilterEditTextStyle">

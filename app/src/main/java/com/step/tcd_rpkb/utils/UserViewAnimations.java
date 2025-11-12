@@ -15,59 +15,14 @@ import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-// import com.step.tcd_rpkb.R; // R не используется в этих методах напрямую
+
 
 public class UserViewAnimations {
 
     private UserViewAnimations() {
-        // Приватный конструктор, так как это утилитный класс
+
     }
 
-    /**
-     * Анимирует элементы UI пользователя (из UserManager.animateUserInterface)
-     * @param fullNameTextView TextView с именем пользователя
-     * @param roleTextView TextView с ролью пользователя
-     * @param avatarImageView ImageView с аватаром пользователя
-     */
-    public static void animateUserInterface(TextView fullNameTextView, TextView roleTextView, ImageView avatarImageView) {
-        // Анимация для имени пользователя
-        if (fullNameTextView != null) {
-            fullNameTextView.setAlpha(0f);
-            fullNameTextView.setTranslationX(-15f);
-            fullNameTextView.animate()
-                    .alpha(1f)
-                    .translationX(0f)
-                    .setDuration(350)
-                    .setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator())
-                    .start();
-        }
-
-        // Анимация для роли пользователя
-        if (roleTextView != null) {
-            roleTextView.setAlpha(0f);
-            roleTextView.setTranslationX(15f);
-            roleTextView.animate()
-                    .alpha(1f)
-                    .translationX(0f)
-                    .setStartDelay(150)
-                    .setDuration(350)
-                    .setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator())
-                    .start();
-        }
-
-        // Анимация для аватара пользователя
-        if (avatarImageView != null) {
-            avatarImageView.setScaleX(0.0f);
-            avatarImageView.setScaleY(0.0f);
-
-            avatarImageView.animate()
-                    .scaleX(1.0f)
-                    .scaleY(1.0f)
-                    .setDuration(450)
-                    .setInterpolator(new android.view.animation.OvershootInterpolator(1.5f))
-                    .start();
-        }
-    }
 
     /**
      * Проигрывает улучшенную анимацию для карточки пользователя (из UserManager.playFancyAnimation)
@@ -83,9 +38,9 @@ public class UserViewAnimations {
             return;
         }
 
-        // Context context = cardView.getContext(); // Context не используется напрямую в этой версии
 
-        // 1. Анимация карточки: подъем и пульсация
+
+        // Анимация карточки: подъем и пульсация
         AnimatorSet cardAnimSet = new AnimatorSet();
 
         ObjectAnimator scaleXCard = ObjectAnimator.ofFloat(cardView, "scaleX", 0.8f, 1.03f, 1.0f);
@@ -96,7 +51,7 @@ public class UserViewAnimations {
         cardAnimSet.setDuration(800);
         cardAnimSet.setInterpolator(new android.view.animation.OvershootInterpolator(1.2f));
 
-        // 2. Анимация аватара: вращение и пульсация
+        // Анимация аватара: вращение и пульсация
         AnimatorSet avatarAnimSet = new AnimatorSet();
 
         ObjectAnimator rotateAvatar = ObjectAnimator.ofFloat(avatarImageView, "rotation", -15f, 15f, 0f);
@@ -107,7 +62,7 @@ public class UserViewAnimations {
         avatarAnimSet.setDuration(950);
         avatarAnimSet.setInterpolator(new android.view.animation.OvershootInterpolator(1.5f));
 
-        // 3. Анимация имени пользователя: слайд и появление
+        // Анимация имени пользователя: слайд и появление
         AnimatorSet nameAnimSet = new AnimatorSet();
         fullNameTextView.setAlpha(0f);
         fullNameTextView.setTranslationX(-100f);
@@ -118,7 +73,7 @@ public class UserViewAnimations {
         nameAnimSet.setStartDelay(300);
         nameAnimSet.setInterpolator(new android.view.animation.DecelerateInterpolator());
 
-        // 4. Анимация роли: слайд и появление с другой стороны
+        // Анимация роли: слайд и появление с другой стороны
         AnimatorSet roleAnimSet = new AnimatorSet();
         roleTextView.setAlpha(0f);
         roleTextView.setTranslationX(100f);
@@ -129,7 +84,7 @@ public class UserViewAnimations {
         roleAnimSet.setStartDelay(500);
         roleAnimSet.setInterpolator(new android.view.animation.DecelerateInterpolator());
 
-        // 5. Добавляем эффект свечения для аватара
+        // Добавляем эффект свечения для аватара
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             ObjectAnimator glowAnimator = ObjectAnimator.ofFloat(
                     avatarImageView, "elevation", 0f, 25f, 15f, 25f, 15f, 5f);

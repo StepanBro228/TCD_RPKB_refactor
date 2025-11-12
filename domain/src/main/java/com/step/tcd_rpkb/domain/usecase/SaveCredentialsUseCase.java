@@ -14,11 +14,7 @@ public class SaveCredentialsUseCase {
     }
 
     public void execute(Credentials credentials) {
-        userSettingsRepository.saveCredentials(credentials);
+        userSettingsRepository.saveCredentialsWithDeviceNum(credentials);
     }
 
-    // Если нужно принимать имя пользователя и пароль отдельно:
-    // public void execute(String username, String password) {
-    //    userSettingsRepository.saveCredentials(new Credentials(username, password));
-    // }
 } 

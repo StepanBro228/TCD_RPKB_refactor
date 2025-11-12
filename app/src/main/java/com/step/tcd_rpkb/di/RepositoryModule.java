@@ -2,8 +2,11 @@ package com.step.tcd_rpkb.di;
 
 import android.content.Context;
 
+import com.google.gson.Gson;
 import com.step.tcd_rpkb.data.datasources.LocalMoveDataSource;
 import com.step.tcd_rpkb.data.datasources.RemoteMoveDataSource;
+import com.step.tcd_rpkb.data.mapper.SaveMoveDataMapper;
+import com.step.tcd_rpkb.data.network.MoveApiService;
 import com.step.tcd_rpkb.data.repository.MoveRepositoryImpl;
 import com.step.tcd_rpkb.data.repository.UserRepositoryImpl;
 import com.step.tcd_rpkb.domain.repository.MoveRepository;
@@ -22,11 +25,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 import dagger.hilt.components.SingletonComponent;
 
 @Module
-@InstallIn(SingletonComponent.class) // Репозитории обычно Singleton
+@InstallIn(SingletonComponent.class) //
 public abstract class RepositoryModule {
 
-    // Используем @Binds для интерфейсов, если реализация имеет @Inject конструктор
-    // или если ее можно создать через @Provides в другом модуле (как у нас)
+
 
     @Provides
     @Singleton
@@ -34,18 +36,21 @@ public abstract class RepositoryModule {
                                                  RemoteMoveDataSource remoteDataSource,
                                                  UserSettingsRepository userSettingsRepository,
                                                  @ApplicationContext Context appContext,
-                                                 com.step.tcd_rpkb.domain.util.ConnectivityChecker connectivityChecker) {
-        return new MoveRepositoryImpl(localDataSource, remoteDataSource, userSettingsRepository, appContext, connectivityChecker);
+                                                 com.step.tcd_rpkb.domain.util.ConnectivityChecker connectivityChecker,
+                                                 MoveApiService moveApiService,
+                                                 SaveMoveDataMapper saveMoveDataMapper,
+                                                 Gson gson) {
+        return new MoveRepositoryImpl(localDataSource, remoteDataSource, userSettingsRepository, appContext, connectivityChecker, moveApiService, saveMoveDataMapper, gson);
     }
 
     @Provides
     @Singleton
     public static UserRepository provideUserRepository(@ApplicationContext Context appContext) {
-        // UserRepositoryImpl принимает только Context
+
         return new UserRepositoryImpl(appContext);
     }
 
     @Binds
     @Singleton
-    public abstract PrixodRepository bindPrixodRepository(PrixodRepositoryImpl prixodRepositoryImpl);
-} 
+    public abstract PrixodRepository bindPrixodRepository(PrixodRepositoryImpl impl);
+}

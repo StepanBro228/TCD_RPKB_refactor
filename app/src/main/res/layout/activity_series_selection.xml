@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorLightGray">
+
+    <!-- Заголовок (уменьшенный) -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@color/colorPrimary"
+        android:elevation="2dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_arrow_back"
+                android:contentDescription="@string/back_button_description" />
+
+            <TextView
+                android:id="@+id/tv_nomenclature_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textColor="@color/colorWhite"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:text="Подбор серии для: Наименование номенклатуры" />
+
+        </LinearLayout>
+
+    </androidx.appcompat.widget.Toolbar>
+
+    <!-- Статистика и информация о документе (увеличенная для лучшей читабельности) -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/card_view_statistics"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="8dp"
+        android:layout_marginVertical="8dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp"
+        app:layout_constraintTop_toBottomOf="@id/toolbar">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Верхний блок со статистикой -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <!-- Блок с количествами -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="4"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_document_quantity_total"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/colorText"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        tools:text="Количество в документе: 10.0" />
+
+                    <TextView
+                        android:id="@+id/tv_allocated_quantity_total"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:textColor="@color/colorText"
+                        android:textSize="16sp"
+                        tools:text="Распределено: 5.0" />
+
+                </LinearLayout>
+
+                <!-- Процент распределения -->
+                <TextView
+                    android:id="@+id/tv_allocated_percent"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.5"
+                    android:gravity="center"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/colorWarning"
+                    tools:text="50%" />
+
+            </LinearLayout>
+
+            <!-- Прогресс бар (увеличенный для лучшей видимости) -->
+            <ProgressBar
+                android:id="@+id/progress_allocated"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="12dp"
+                android:layout_marginTop="12dp"
+                android:progress="50"
+                android:progressTint="@color/colorSuccess"
+                android:progressBackgroundTint="@color/colorLightGray"
+                tools:progress="50" />
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- Заголовки столбцов (уменьшенные) -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/card_headers"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="6dp"
+        android:layout_marginTop="4dp"
+        app:cardCornerRadius="4dp"
+        app:cardElevation="1dp"
+        app:layout_constraintTop_toBottomOf="@id/card_view_statistics">
+
+        <LinearLayout
+            android:id="@+id/layout_headers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="6dp"
+            android:background="@color/colorPrimary">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text="Серия"
+                android:textStyle="bold"
+                android:textSize="11sp"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:textColor="@color/colorWhite" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.5"
+                android:text="Срок годности"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:textStyle="bold"
+                android:textSize="11sp"
+                android:textColor="@color/colorWhite" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Своб. ост."
+                android:textStyle="bold"
+                android:textSize="11sp"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:textColor="@color/colorWhite" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Резерв. др. ЗНП"
+                android:textStyle="bold"
+                android:textSize="11sp"
+                android:gravity="center"
+                android:textColor="@color/colorWhite" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Кол-во в док."
+                android:textStyle="bold"
+                android:textSize="11sp"
+                android:gravity="center"
+                android:textColor="@color/colorWhite" />
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Список серий (увеличенное пространство) -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view_series"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:paddingBottom="40dp"
+        android:paddingTop="2dp"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
+        android:scrollbarStyle="outsideOverlay"
+        android:scrollbars="vertical"
+        android:fadeScrollbars="false"
+        app:layout_constraintTop_toBottomOf="@id/card_headers"
+        app:layout_constraintBottom_toTopOf="@+id/card_buttons"
+        tools:listitem="@layout/item_series_selection" />
+
+    <!-- Кнопки действий (уменьшенные) -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/card_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:elevation="4dp"
+        app:cardElevation="4dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:id="@+id/layout_buttons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorWhite"
+            android:orientation="horizontal"
+            android:padding="6dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_cancel"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:padding="4dp"
+                android:text="@string/cancel"
+                android:textAllCaps="false"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                app:backgroundTint="@color/colorLightGray"
+                app:cornerRadius="4dp" />
+
+
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_save"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="4dp"
+                android:layout_weight="1"
+                android:padding="4dp"
+                android:text="@string/save"
+                android:textAllCaps="false"
+                android:textColor="@color/colorWhite"
+                android:textSize="12sp"
+                app:backgroundTint="@color/colorPrimary"
+                app:cornerRadius="4dp" />
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Индикатор загрузки (без изменений) -->
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:visibility="visible" />
+
+</androidx.constraintlayout.widget.ConstraintLayout> 

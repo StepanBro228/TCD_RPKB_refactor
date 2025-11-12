@@ -5,8 +5,8 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBackground"
-    tools:context=".MainActivity">
+    android:background="@drawable/background_elegant"
+    tools:context=".UI.main.activity.MainActivity">
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -60,12 +60,54 @@
             app:strokeWidth="3dp" />
     </LinearLayout>
 
+    <!-- Кнопка авторизации (по центру экрана для неавторизованных пользователей) -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/auth_button_center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="32dp"
+        android:backgroundTint="@color/colorPrimary"
+        android:elevation="8dp"
+        android:paddingHorizontal="32dp"
+        android:paddingVertical="12dp"
+        android:text="Авторизация"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:cornerRadius="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:strokeColor="@color/colorPrimaryDark"
+        app:strokeWidth="2dp"
+        tools:visibility="visible" />
+
+    <!-- Кнопка авторизации (в углу для авторизованных пользователей) -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/auth_button_corner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:contentDescription="Авторизация"
+        android:visibility="gone"
+        app:backgroundTint="@color/colorPrimary"
+        app:fabCustomSize="65dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@android:drawable/ic_lock_idle_lock"
+        app:tint="@android:color/white"
+        tools:visibility="visible" />
+
     <!-- Кнопка настроек в правом верхнем углу -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/settings_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        app:fabCustomSize="65dp"
         android:layout_margin="16dp"
+        app:iconSize = "40dp"
         android:contentDescription="Настройки подключения"
         app:backgroundTint="@color/colorPrimary"
         app:layout_constraintEnd_toEndOf="parent"

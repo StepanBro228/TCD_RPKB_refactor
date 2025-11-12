@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorWhite"
+    android:defaultFocusHighlightEnabled="false">
+
+    <!-- Невидимый элемент для приема фокуса -->
+    <View
+        android:id="@+id/focus_dummy"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:visibility="invisible" />
+
+    <!-- Верхний тулбар с тенью -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorWhite"
+        app:elevation="4dp">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@color/colorPrimary"
+            app:layout_scrollFlags="scroll|enterAlways">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:id="@+id/btn_back"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_arrow_back"
+                    app:tint="@color/colorWhite"
+                    android:contentDescription="Назад" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="16dp"
+                    android:text="Замена серии товаров"
+                    android:textColor="@color/colorWhite"
+                    android:textSize="18sp"
+                    android:fontFamily="sans-serif-medium" />
+
+            </LinearLayout>
+        </androidx.appcompat.widget.Toolbar>
+
+        <!-- Контент для свайпа -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/colorWhite"
+            app:layout_scrollFlags="scroll">
+
+            <!-- Карточка с информацией -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginTop="0dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <!-- Номенклатура и Серия -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginBottom="4dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Номенклатура"
+                            android:textColor="@color/colorText"
+                            android:textSize="13sp"
+                            android:alpha="0.7"
+                            android:fontFamily="sans-serif-medium"/>
+
+                        <TextView
+                            android:id="@+id/tv_nomenclature_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/colorPrimary"
+                            android:textSize="16sp"
+                            android:fontFamily="sans-serif-medium"
+                            tools:text="Название номенклатуры" />
+
+
+
+                        <TextView
+                            android:id="@+id/tv_series_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/colorPrimary"
+                            android:textSize="13sp"
+                            android:fontFamily="sans-serif-medium"
+                            tools:text="Название серии" />
+                    </LinearLayout>
+
+                    <!-- Информация о складе и остатке -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <!-- Левая колонка -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Склад"
+                                android:textColor="@color/colorText"
+                                android:alpha="0.7"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif-medium"/>
+
+                            <TextView
+                                android:id="@+id/tv_warehouse"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/colorText"
+                                android:textSize="14sp"
+                                tools:text="Склад №1" />
+                        </LinearLayout>
+
+                        <!-- Средняя колонка -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Единицы измерения"
+                                android:textColor="@color/colorText"
+                                android:alpha="0.7"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif-medium"/>
+
+                            <TextView
+                                android:id="@+id/tv_unit_of_measurement"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/colorText"
+                                android:textSize="14sp"
+                                tools:text="шт" />
+                        </LinearLayout>
+
+                        <!-- Правая колонка -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Свободный остаток"
+                                android:textColor="@color/colorText"
+                                android:alpha="0.7"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif-medium"/>
+
+                            <TextView
+                                android:id="@+id/tv_free_balance"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/colorSuccess"
+                                android:textStyle="bold"
+                                android:textSize="16sp"
+                                tools:text="50.0" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Блок с резервированием -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginBottom="4dp"
+                android:layout_marginTop="4dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="10dp"
+                    android:paddingTop="4dp"
+                    >
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Количество для замены серии"
+                        android:textColor="@color/colorText"
+                        android:textSize="14sp" 
+                        android:fontFamily="sans-serif-medium"
+                        android:alpha="0.8"
+                        android:layout_marginBottom="8dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <!-- Поле для ввода количества резерва -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="8dp"
+                            app:boxStrokeColor="@color/colorPrimary"
+                            app:hintEnabled="false"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/et_change_quantity"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="numberDecimal"
+                                android:layout_gravity="center"
+                                android:textSize="16sp"
+                                android:hint="0.0"
+                                android:focusable="true"
+                                android:focusableInTouchMode="true"
+                                android:imeOptions="actionDone"
+                                android:paddingVertical="5dp" />
+
+
+
+                        </com.google.android.material.textfield.TextInputLayout>
+                        <!-- Кнопка "Заменить Серию" -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_change_series"
+                            style="@style/Widget.MaterialComponents.Button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="45dp"
+                            android:layout_gravity="center"
+
+
+                            android:paddingHorizontal="16dp"
+                            android:paddingVertical="0dp"
+                            android:text="Заменить Серию"
+                            android:textAllCaps="false"
+                            android:textSize="16sp"
+                            app:backgroundTint="@color/colorSuccess"
+                            app:cornerRadius="8dp" />
+
+                    </LinearLayout>
+                    
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
+        <!-- Заголовок таблицы (не скроллится) -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="25dp"
+            android:layout_marginBottom="8dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:layout_scrollFlags="enterAlways">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingHorizontal="18dp"
+                android:paddingVertical="6dp"
+                android:background="@color/colorPrimary">
+
+
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Серии для замены"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:textColor="@color/colorWhite"
+                    android:gravity="center"
+                    android:layout_gravity="center"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Список продуктов для замены серии -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view_products"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="80dp"
+        android:paddingHorizontal="12dp"
+        android:overScrollMode="never"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+
+    <!-- Нижние кнопки -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        app:cardElevation="8dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:background="@color/colorWhite">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_cancel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Отмена"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                android:layout_marginEnd="8dp"
+                app:cornerRadius="8dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_save"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Сохранить"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                app:backgroundTint="@color/colorPrimary"
+                app:cornerRadius="8dp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Индикатор загрузки -->
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout> 

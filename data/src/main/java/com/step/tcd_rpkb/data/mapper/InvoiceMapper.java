@@ -26,6 +26,8 @@ public class InvoiceMapper {
         List<Product> domainProducts = productMapper.mapToDomainList(dtoInvoice.getProducts());
         
         return new Invoice(
+                dtoInvoice.getErrorText(),
+                dtoInvoice.isResult(),
                 dtoInvoice.getMoveUuid(),
                 domainProducts
         );
@@ -38,6 +40,8 @@ public class InvoiceMapper {
         List<ProductDto> dtoProducts = productMapper.mapToDtoList(domainInvoice.getProducts());
         
         InvoiceDto dtoInvoice = new InvoiceDto();
+        dtoInvoice.setErrorText(domainInvoice.getErrorText());
+        dtoInvoice.setResult(domainInvoice.isResult());
         dtoInvoice.setMoveUuid(domainInvoice.getUuid());
         dtoInvoice.setProducts(dtoProducts);
         return dtoInvoice;

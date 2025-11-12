@@ -1,40 +1,46 @@
 package com.step.tcd_rpkb.domain.model;
 
-// import com.google.gson.annotations.SerializedName; // В идеале, аннотации Gson должны быть в DTO слоя data
 
 import java.util.List;
 
 public class Invoice {
-    // @SerializedName("ГУИДПеремещения") // Атрибут для Gson, лучше в DTO
+    private final String errorText;
+    private final boolean result;
     private String uuid;
-    
-    // @SerializedName("Данные") // Атрибут для Gson, лучше в DTO
-    // private String documentNumber; // Удаляем поле
-    // private String documentDate;   // Удаляем поле
     private List<Product> products;
 
-    // Конструктор, геттеры и сеттеры (или сделать поля final и использовать только конструктор)
-    public Invoice(String uuid, /*String documentNumber, String documentDate,*/ List<Product> products) {
+    // Конструктор с новыми полями
+    public Invoice(String errorText, boolean result, String uuid, List<Product> products) {
+        this.errorText = errorText;
+        this.result = result;
         this.uuid = uuid;
-        // this.documentNumber = documentNumber; // Удаляем присваивание
-        // this.documentDate = documentDate;     // Удаляем присваивание
         this.products = products;
     }
 
-    public Invoice() { // Пустой конструктор может быть полезен для некоторых фреймворков/мапперов
+    public Invoice(String uuid, List<Product> products) {
+        this.errorText = "";
+        this.result = true;
+        this.uuid = uuid;
+        this.products = products;
+    }
+
+    public Invoice() {
+        this.errorText = "";
+        this.result = true;
+    }
+
+
+    public String getErrorText() { 
+        return errorText; 
+    }
+    
+    public boolean isResult() { 
+        return result; 
     }
 
     public String getUuid() {
         return uuid;
     }
-
-    // public String getDocumentNumber() { // Удаляем геттер
-    //     return documentNumber;
-    // }
-
-    // public String getDocumentDate() { // Удаляем геттер
-    //     return documentDate;
-    // }
 
     public List<Product> getProducts() {
         return products;
@@ -44,14 +50,6 @@ public class Invoice {
         this.uuid = uuid;
     }
 
-    // public void setDocumentNumber(String documentNumber) { // Удаляем сеттер
-    //     this.documentNumber = documentNumber;
-    // }
-
-    // public void setDocumentDate(String documentDate) { // Удаляем сеттер
-    //     this.documentDate = documentDate;
-    // }
-
     public void setProducts(List<Product> products) {
         this.products = products;
     }
@@ -59,9 +57,9 @@ public class Invoice {
     @Override
     public String toString() {
         return "Invoice{" +
-                "uuid='" + uuid + '\'' +
-                // ", documentNumber='" + documentNumber + '\'' + // Удаляем из toString
-                // ", documentDate='" + documentDate + '\'' +   // Удаляем из toString
+                "errorText='" + errorText + '\'' +
+                ", result=" + result +
+                ", uuid='" + uuid + '\'' +
                 ", products=" + (products != null ? products.size() : 0) + " items" +
                 '}';
     }

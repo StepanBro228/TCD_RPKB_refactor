@@ -16,8 +16,8 @@
     <color name="colorWhite">#FFFFFF</color>
     
     <!-- Функциональные цвета -->
-    <color name="colorError">#D32F2F</color>
-    <color name="colorSuccess">#388E3C</color>
+    <color name="colorError">#FF4444</color>
+    <color name="colorSuccess">#4CAF50</color>
     <color name="colorDivider">#E0E0E0</color>
     
     <!-- Индикаторы -->
@@ -57,4 +57,18 @@
     <!-- Цвета для кнопок фильтрации -->
     <color name="applyButtonColor">#1A237E</color>
     <color name="resetButtonColor">#B71C1C</color>
+    
+    <!-- Цвета для экрана подбора серий -->
+    <color name="light_gray">#F5F5F5</color>
+    <color name="header_background">#E0E0E0</color>
+    <color name="colorLightGray">#F5F5F5</color>
+    <color name="colorWarning">#FFBB33</color>
+    
+    <!-- Цвета для экрана резервирования ЗНП -->
+    <color name="background_light">#F8F9FA</color>
+    <color name="text_primary">#212529</color>
+    <color name="text_secondary">#6C757D</color>
+    <color name="green">#28A745</color>
+    <color name="orange">#FD7E14</color>
+    <color name="red">#DC3545</color>
 </resources>

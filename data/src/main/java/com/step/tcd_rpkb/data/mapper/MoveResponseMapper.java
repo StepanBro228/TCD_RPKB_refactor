@@ -22,6 +22,9 @@ public class MoveResponseMapper {
     public MoveResponse mapToDomain(MoveResponseDto dto) {
         if (dto == null) return null;
         return new MoveResponse(
+                dto.getErrorText(),
+                dto.isResult(),
+                dto.getState(),
                 dto.getStartDate(),
                 dto.getEndDate(),
                 dto.getStatusList(),
@@ -41,6 +44,9 @@ public class MoveResponseMapper {
     public MoveResponseDto mapToDto(MoveResponse domain) {
         if (domain == null) return null;
         MoveResponseDto dto = new MoveResponseDto();
+        dto.setErrorText(domain.getErrorText());
+        dto.setResult(domain.isResult());
+        dto.setState(domain.getState());
         dto.setStartDate(domain.getStartDate());
         dto.setEndDate(domain.getEndDate());
         dto.setStatusList(domain.getStatusList());

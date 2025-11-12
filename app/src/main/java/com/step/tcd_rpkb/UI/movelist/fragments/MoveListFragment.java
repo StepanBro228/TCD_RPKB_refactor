@@ -14,20 +14,20 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.step.tcd_rpkb.UI.movelist.activity.MoveList_menu;
+import com.step.tcd_rpkb.UI.movelist.activity.MoveListActivity;
 import com.step.tcd_rpkb.domain.model.MoveItem;
 import com.step.tcd_rpkb.R;
-import com.step.tcd_rpkb.UI.movelist.adapters.MoveAdapter;
+import com.step.tcd_rpkb.UI.movelist.adapters.MoveListAdapter;
 import com.step.tcd_rpkb.UI.movelist.viewmodel.MoveListViewModel;
 // import com.step.tcd_rpkb.utils.MoveDiffCallback; // Больше не нужен здесь
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MoveListFragment extends Fragment implements MoveAdapter.OnSelectionChangeListener, MoveAdapter.OnMoveItemClickListener {
+public class MoveListFragment extends Fragment implements MoveListAdapter.OnSelectionChangeListener, MoveListAdapter.OnMoveItemClickListener {
     
     private RecyclerView recyclerView;
-    private MoveAdapter adapter;
+    private MoveListAdapter adapter;
     private String status;
     
     private MoveListViewModel moveListViewModel;
@@ -35,6 +35,7 @@ public class MoveListFragment extends Fragment implements MoveAdapter.OnSelectio
     // Константы для статусов, чтобы избежать опечаток при сравнении
     private static final String STATUS_FORMIROVAN = "Сформирован";
     private static final String STATUS_KOMPLEKTUETSA = "Комплектуется";
+    private static final String STATUS_PODGOTOVLEN = "Подготовлен";
     
     public static MoveListFragment newInstance(String status) {
         MoveListFragment fragment = new MoveListFragment();
@@ -74,7 +75,7 @@ public class MoveListFragment extends Fragment implements MoveAdapter.OnSelectio
         layoutManager.setItemPrefetchEnabled(true);
         layoutManager.setInitialPrefetchItemCount(15);
         
-        adapter = new MoveAdapter(getContext()); 
+        adapter = new MoveListAdapter(getContext());
         adapter.setSelectionChangeListener(this);
         adapter.setOnMoveItemClickListener(this);
         
@@ -91,14 +92,18 @@ public class MoveListFragment extends Fragment implements MoveAdapter.OnSelectio
     private void observeViewModel() {
         if (STATUS_FORMIROVAN.equals(status)) {
             moveListViewModel.filteredFormirovanList.observe(getViewLifecycleOwner(), newList -> {
-                // Log.d("DEBUG_UPDATE", "[Fragment_" + status + ".observer.filteredFormirovanList] Triggered. List size: " + (newList != null ? newList.size() : "null"));
                 if (newList != null) {
                     updateAdapterData(newList);
                 }
             });
         } else if (STATUS_KOMPLEKTUETSA.equals(status)) {
             moveListViewModel.filteredKomplektuetsaList.observe(getViewLifecycleOwner(), newList -> {
-                // Log.d("DEBUG_UPDATE", "[Fragment_" + status + ".observer.filteredKomplektuetsaList] Triggered. List size: " + (newList != null ? newList.size() : "null"));
+                if (newList != null) {
+                    updateAdapterData(newList);
+                }
+            });
+        } else if (STATUS_PODGOTOVLEN.equals(status)) {
+            moveListViewModel.filteredPodgotovlenList.observe(getViewLifecycleOwner(), newList -> {
                 if (newList != null) {
                     updateAdapterData(newList);
                 }
@@ -112,26 +117,9 @@ public class MoveListFragment extends Fragment implements MoveAdapter.OnSelectio
      */
     private void updateAdapterData(List<MoveItem> newList) {
         if (adapter == null) {
-            // Log.d("DEBUG_UPDATE", "[Fragment_" + status + ".updateAdapterData] Adapter is NULL. Cannot submit list.");
             return;
         }
-        // Log.d("DEBUG_UPDATE", "[Fragment_" + status + ".updateAdapterData] Submitting list. Size: " + (newList != null ? newList.size() : "null"));
         adapter.submitList(newList != null ? new ArrayList<>(newList) : new ArrayList<>()); // Передаем копию
-
-        // Log.d("DEBUG_UPDATE", "[Fragment_" + status + ".updateAdapterData] Adapter data submitted. Current adapter item count: " + adapter.getItemCount());
-    }
-
-    /**
-     * Публичный метод для обновления данных. Теперь в основном для обратной совместимости или если понадобится.
-     * Предпочтительно, чтобы данные поступали через ViewModel.
-     */
-    public void updateData(List<MoveItem> moves) {
-        Log.d("MoveListFragment_" + status, "Public updateData called with " + (moves != null ? moves.size() : "null") + " items. Delegating to adapter.submitList.");
-        if (moves != null) {
-            // Передаем копию в submitList, чтобы избежать неожиданных модификаций оригинала,
-            // хотя ListAdapter обычно сам создает копию для DiffUtil.
-            adapter.submitList(new ArrayList<>(moves)); 
-        }
     }
     
     @Override
@@ -156,13 +144,21 @@ public class MoveListFragment extends Fragment implements MoveAdapter.OnSelectio
     
     @Override
     public void onSelectionChanged(int count) {
-        if (getActivity() instanceof MoveList_menu) {
-            ((MoveList_menu) getActivity()).updateSelectionPanel(count);
+        if (getActivity() instanceof MoveListActivity) {
+            ((MoveListActivity) getActivity()).updateSelectionPanel(count);
         }
     }
     
-    public MoveAdapter getAdapter() {
+    public MoveListAdapter getAdapter() {
         return adapter;
+    }
+
+    /**
+     * Возвращает RecyclerView фрагмента для прокрутки
+     * @return RecyclerView или null если не инициализирован
+     */
+    public RecyclerView getRecyclerView() {
+        return recyclerView;
     }
 
     @Override

@@ -26,15 +26,4 @@ public class Event<T> {
             return content;
         }
     }
-
-    /**
-     * Возвращает контент, даже если он уже был обработан.
-     */
-    public T peekContent() {
-        return content;
-    }
-
-    public boolean hasBeenHandled() {
-        return hasBeenHandled;
-    }
 } 

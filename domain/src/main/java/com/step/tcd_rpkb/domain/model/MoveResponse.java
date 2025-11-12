@@ -1,26 +1,29 @@
 package com.step.tcd_rpkb.domain.model;
 
-// import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 public class MoveResponse {
-    // @SerializedName("ДатаНачала")
+    private final String errorText;
+    private final boolean result;
+    private final String state;
     private final String startDate;
-    // @SerializedName("ДатаОкончания")
     private final String endDate;
-    // @SerializedName("МассивСостоянийСтрокой")
     private final List<String> statusList;
-    // @SerializedName("Данные")
     private final List<MoveItem> items;
 
-    public MoveResponse(String startDate, String endDate, List<String> statusList, List<MoveItem> items) {
+    public MoveResponse(String errorText, boolean result, String state, String startDate, String endDate, List<String> statusList, List<MoveItem> items) {
+        this.errorText = errorText;
+        this.result = result;
+        this.state = state;
         this.startDate = startDate;
         this.endDate = endDate;
         this.statusList = statusList;
         this.items = items;
     }
 
-    // Геттеры
+    public String getErrorText() { return errorText; }
+    public boolean isResult() { return result; }
+    public String getState() { return state; }
     public String getStartDate() { return startDate; }
     public String getEndDate() { return endDate; }
     public List<String> getStatusList() { return statusList; }

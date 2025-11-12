@@ -42,6 +42,32 @@
 
         </RadioGroup>
 
+        <TextView
+            android:id="@+id/baseTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=" URL Базы данных:"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp">
+
+            <EditText
+                android:id="@+id/DataBaseURl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="URL"
+                android:textSize="12sp"
+                android:inputType="text"
+                android:maxLines="1" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -122,6 +148,37 @@
 
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
+    <LinearLayout
+        android:id="@+id/DeviceLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Номер устройства: "
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp">
+
+            <EditText
+                android:id="@+id/etDeviceNum"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Номер"
+                android:textSize="12sp"
+                android:inputType="text"
+                android:maxLines="1" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+    </LinearLayout>
+
 
     </LinearLayout>
 </ScrollView> 

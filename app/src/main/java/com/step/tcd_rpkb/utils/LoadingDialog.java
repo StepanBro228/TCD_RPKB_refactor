@@ -29,7 +29,7 @@ public class LoadingDialog {
         try {
             dialog = new Dialog(context);
             
-            // Проверяем, что контекст активен
+
             if (context instanceof android.app.Activity && 
                 !((android.app.Activity) context).isFinishing() &&
                 !((android.app.Activity) context).isDestroyed()) {
@@ -38,11 +38,11 @@ public class LoadingDialog {
                 dialog.setContentView(R.layout.dialog_loading);
                 dialog.setCancelable(false);
                 
-                // Устанавливаем прозрачный фон для окна диалога
+
                 if (dialog.getWindow() != null) {
                     dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
                     
-                    // Устанавливаем макет на всю ширину экрана с правильным отображением
+
                     WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
                     layoutParams.copyFrom(dialog.getWindow().getAttributes());
                     layoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT;
@@ -74,7 +74,7 @@ public class LoadingDialog {
     public void show(String message) {
         try {
             if (dialog != null && tvMessage != null) {
-                // Проверяем, что контекст по-прежнему активен
+
                 if (context instanceof android.app.Activity && 
                     !((android.app.Activity) context).isFinishing() &&
                     !((android.app.Activity) context).isDestroyed()) {
@@ -93,28 +93,6 @@ public class LoadingDialog {
             }
         } catch (Exception e) {
             Log.e("LoadingDialog", "Ошибка при показе диалога: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * Обновляет сообщение в диалоге
-     * 
-     * @param message новое сообщение
-     */
-    public void updateMessage(String message) {
-        try {
-            if (dialog != null && dialog.isShowing() && tvMessage != null) {
-                // Проверяем, что контекст по-прежнему активен
-                if (context instanceof android.app.Activity && 
-                    !((android.app.Activity) context).isFinishing() &&
-                    !((android.app.Activity) context).isDestroyed()) {
-                    
-                    tvMessage.setText(message);
-                    Log.d("LoadingDialog", "Сообщение обновлено: " + message);
-                }
-            }
-        } catch (Exception e) {
-            Log.e("LoadingDialog", "Ошибка при обновлении сообщения: " + e.getMessage(), e);
         }
     }
     

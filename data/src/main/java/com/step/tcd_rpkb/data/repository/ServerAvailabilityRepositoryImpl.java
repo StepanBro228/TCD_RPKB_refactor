@@ -21,45 +21,28 @@ public class ServerAvailabilityRepositoryImpl implements ServerAvailabilityRepos
     private static final String TAG = "ServerAvailabilityRepo";
 
     private final MoveApiService moveApiService;
-    // private final Context appContext; // Больше не нужен здесь, т.к. ConnectivityChecker его инкапсулирует
-    private final ConnectivityChecker connectivityChecker; // <-- ДОБАВЛЯЕМ
+    private final ConnectivityChecker connectivityChecker;
 
     @Inject
-    // public ServerAvailabilityRepositoryImpl(MoveApiService moveApiService, Context appContext) { // СТАРАЯ СИГНАТУРА
-    public ServerAvailabilityRepositoryImpl(MoveApiService moveApiService, ConnectivityChecker connectivityChecker) { // НОВАЯ СИГНАТУРА
+    public ServerAvailabilityRepositoryImpl(MoveApiService moveApiService, ConnectivityChecker connectivityChecker) {
         this.moveApiService = moveApiService;
         // this.appContext = appContext;
-        this.connectivityChecker = connectivityChecker; // <-- СОХРАНЯЕМ
+        this.connectivityChecker = connectivityChecker;
     }
 
     @Override
     public void checkServerAvailability(ServerAvailabilityCallback domainCallback) {
-        // Используем NetworkUtils для проверки доступности сети
-        // if (!NetworkUtils.isNetworkAvailable(appContext)) {
-        if (!connectivityChecker.isNetworkAvailable()) { // <-- ИСПОЛЬЗУЕМ НОВЫЙ ЧЕКЕР
+        if (!connectivityChecker.isNetworkAvailable()) {
             Log.d(TAG, "❌ Сеть недоступна, сервер считается недоступным");
             domainCallback.onResult(false);
             return;
         }
 
-        // Используем moveApiService.getMoveList() без параметров, 
-        // так как нам нужен просто GET запрос к /movelist для проверки доступности сервера.
-        // AuthInterceptor добавит необходимые заголовки.
-        // Убедимся, что MoveApiService.getMoveList() возвращает Call<MoveResponseDto>, а не Call<Object>.
-        // Если сервер на /movelist без параметров возвращает не MoveResponseDto, а что-то другое (или пустой ответ),
-        // то Call<Void> или Call<ResponseBody> может быть более подходящим.
-        // Но для простой проверки доступности, если /movelist ожидает параметры и не может быть вызван без них,
-        // тогда moveApiService.getMoveList(null, null, null) было бы правильнее, если сервер это допускает.
-        // Старый DataProvider делал GET на /movelist БЕЗ query params. Значит, второй метод в MoveApiService (без query) - то что нужно.
+        Call<com.step.tcd_rpkb.data.network.dto.MoveResponseDto> call = moveApiService.getMoveList();
 
-        Call<com.step.tcd_rpkb.data.network.dto.MoveResponseDto> call = moveApiService.getMoveList(); // Используем версию без параметров
-
-        call.enqueue(new Callback<com.step.tcd_rpkb.data.network.dto.MoveResponseDto>() { // Тип изменен на MoveResponseDto
+        call.enqueue(new Callback<com.step.tcd_rpkb.data.network.dto.MoveResponseDto>() {
             @Override
             public void onResponse(Call<com.step.tcd_rpkb.data.network.dto.MoveResponseDto> call, Response<com.step.tcd_rpkb.data.network.dto.MoveResponseDto> response) {
-                // Любой ответ от сервера (даже ошибка 4xx или 5xx) означает, что сервер жив.
-                // Retrofit выдаст onFailure только при сетевых проблемах или проблемах с парсингом,
-                // которые здесь не так важны, как сам факт ответа.
                 Log.d(TAG, "✅ Сервер доступен, получен ответ с кодом: " + response.code());
                 if (response.code() == 401) {
                     Log.d(TAG, "⚠️ Предупреждение: Ошибка авторизации (401): проверьте имя пользователя и пароль");
@@ -76,15 +59,4 @@ public class ServerAvailabilityRepositoryImpl implements ServerAvailabilityRepos
             }
         });
     }
-
-    // Локальная реализация isNetworkAvailable УДАЛЕНА
-    /*
-    private boolean isNetworkAvailable(Context context) {
-        if (context == null) return false;
-        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (connectivityManager == null) return false;
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
-    */
 } 

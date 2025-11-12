@@ -18,7 +18,7 @@ public class Peredacha_LVC extends BaseFullscreenActivity {
         String jsonData = getIntent().getStringExtra("testOutput");
 
         if (jsonData != null) {
-            test.setText(jsonData);  // Выводим JSON в TextView
+            test.setText(jsonData);
         } else {
             test.setText("Ошибка: данных нет!");
         }

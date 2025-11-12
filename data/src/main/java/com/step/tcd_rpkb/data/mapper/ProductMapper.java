@@ -1,6 +1,6 @@
 package com.step.tcd_rpkb.data.mapper;
 
-// import com.step.tcd_rpkb.Parsing_info.Product; // Удаляем старый импорт
+
 import com.step.tcd_rpkb.data.network.dto.ProductDto; // Добавляем импорт ProductDto
 import com.step.tcd_rpkb.domain.model.Product;    // Доменная модель продукта
 
@@ -18,10 +18,10 @@ public class ProductMapper {
         if (dtoProduct == null) {
             return null;
         }
-        // Важно: убедитесь, что все поля корректно мапятся.
-        // Если в DomainProduct меньше полей, чем в DtoProduct, это нормально.
-        // Если в DomainProduct есть поля, которых нет в DtoProduct, они будут null/дефолтными.
+
         return new Product(
+                dtoProduct.getProductLineId(),
+                dtoProduct.getParentProductLineId(),
                 dtoProduct.getNomenclatureUuid(),
                 dtoProduct.getNomenclatureName(),
                 dtoProduct.getRequestedUuid(),
@@ -43,16 +43,26 @@ public class ProductMapper {
                 dtoProduct.getFreeBalanceBySeries(),
                 dtoProduct.getFreeBalance(),
                 dtoProduct.getTotalBalance(),
-                dtoProduct.getTaken()
+                dtoProduct.getTaken(),
+                dtoProduct.getExists()
         );
     }
 
-    public ProductDto mapToDto(Product domainProduct) { // Изменяем тип возвращаемого значения и имя метода
+    public ProductDto mapToDto(Product domainProduct) {
         if (domainProduct == null) {
             return null;
         }
-        // При обратном маппинге, возможно, не все поля из DomainProduct нужны в DtoProduct.
-        ProductDto dtoProduct = new ProductDto(); // Создаем ProductDto
+        
+        // логирование
+        android.util.Log.d("ProductMapper", "mapToDto: Маппинг продукта " + domainProduct.getProductLineId() + 
+                          ", nomenclature=" + domainProduct.getNomenclatureName() + 
+                          ", quantity=" + domainProduct.getQuantity() + 
+                          ", taken=" + domainProduct.getTaken());
+        
+
+        ProductDto dtoProduct = new ProductDto();
+        dtoProduct.setProductLineId(domainProduct.getProductLineId());
+        dtoProduct.setParentProductLineId(domainProduct.getParentProductLineId());
         dtoProduct.setNomenclatureUuid(domainProduct.getNomenclatureUuid());
         dtoProduct.setNomenclatureName(domainProduct.getNomenclatureName());
         dtoProduct.setRequestedUuid(domainProduct.getRequestedUuid());
@@ -75,27 +85,35 @@ public class ProductMapper {
         dtoProduct.setFreeBalance(domainProduct.getFreeBalance());
         dtoProduct.setTotalBalance(domainProduct.getTotalBalance());
         dtoProduct.setTaken(domainProduct.getTaken());
+        dtoProduct.setExists(domainProduct.getExists());
+        
+        // Логирование
+        android.util.Log.d("ProductMapper", "mapToDto РЕЗУЛЬТАТ: DTO " + dtoProduct.getProductLineId() + 
+                          ", nomenclature=" + dtoProduct.getNomenclatureName() + 
+                          ", quantity=" + dtoProduct.getQuantity() + 
+                          ", taken=" + dtoProduct.getTaken());
+        
         return dtoProduct;
     }
 
-    public List<Product> mapToDomainList(List<ProductDto> dtoListProducts) { // Изменяем тип параметра
+    public List<Product> mapToDomainList(List<ProductDto> dtoListProducts) {
         if (dtoListProducts == null) {
-            return new ArrayList<>(); // Возвращаем пустой список, а не null
+            return new ArrayList<>();
         }
         List<Product> domainProducts = new ArrayList<>();
-        for (ProductDto dtoProduct : dtoListProducts) { // Изменяем тип элемента
+        for (ProductDto dtoProduct : dtoListProducts) {
             domainProducts.add(mapToDomain(dtoProduct));
         }
         return domainProducts;
     }
 
-    public List<ProductDto> mapToDtoList(List<Product> domainProducts) { // Изменяем тип возвращаемого значения и имя метода
+    public List<ProductDto> mapToDtoList(List<Product> domainProducts) {
         if (domainProducts == null) {
             return new ArrayList<>();
         }
-        List<ProductDto> dtoListProducts = new ArrayList<>(); // Изменяем тип списка
+        List<ProductDto> dtoListProducts = new ArrayList<>();
         for (Product domainProduct : domainProducts) {
-            dtoListProducts.add(mapToDto(domainProduct)); // Используем mapToDto
+            dtoListProducts.add(mapToDto(domainProduct));
         }
         return dtoListProducts;
     }

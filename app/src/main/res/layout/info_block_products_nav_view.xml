@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="13dp"
+    android:paddingEnd="13dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp"
+    android:layout_marginTop="12dp"
+    android:layout_marginBottom="12dp"
+    android:layout_marginStart="10dp"
+    android:layout_marginEnd="10dp"
+    android:background="@drawable/move_info_background">
+
+
+    <TextView
+        android:id="@+id/tv_move_display_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:textColor="#333333"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:maxLines="4"
+        android:ellipsize="end"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
+
+        <TextView
+            android:id="@+id/tv_positions_count"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="15sp"
+            android:textColor="#666666"/>
+
+        <TextView
+            android:id="@+id/tv_items_count"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="15sp"
+            android:textColor="#666666"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="14dp"
+        android:layout_marginBottom="4dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Прогресс:"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#666666"/>
+
+            <TextView
+                android:id="@+id/tv_progress_ratio"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#007AFF"/>
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progress_bar_filled"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="16dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="4dp"
+            android:progress="0"
+            android:max="100"
+            android:progressTint="#007AFF"
+            android:progressBackgroundTint="#E0E0E0"/>
+
+    </LinearLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="6dp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0"
+        android:layout_marginTop="6dp" />
+
+</LinearLayout> 

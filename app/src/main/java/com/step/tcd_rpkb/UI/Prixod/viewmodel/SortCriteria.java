@@ -5,5 +5,5 @@ public enum SortCriteria {
     MEASURE,
     AMOUNT,
     STORAGE,
-    NONE // Для состояния "без сортировки" или "сброс сортировки"
+    NONE // "без сортировки"
 } 

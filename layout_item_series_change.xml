@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Этот файл нужно создать как app/src/main/res/layout/item_series_change.xml
+Описание layout для элемента списка продуктов для замены серии в ZnpSelectionActivity
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:background="?android:attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Чекбокс для выбора -->
+    <CheckBox
+        android:id="@+id/checkbox_select"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginEnd="12dp" />
+
+    <!-- Контейнер для информации о продукте -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Серия -->
+        <TextView
+            android:id="@+id/tv_series_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Серия 12345"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="4dp" />
+
+        <!-- ЗНП -->
+        <TextView
+            android:id="@+id/tv_znp_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ЗНП №123456 от 01.01.2023"
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginBottom="4dp" />
+
+        <!-- К обеспечению -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="К обеспечению: "
+                android:textSize="14sp"
+                android:textColor="@android:color/black" />
+
+            <TextView
+                android:id="@+id/tv_quantity_to_procure"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="100.00"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/holo_blue_dark" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout> 

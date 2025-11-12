@@ -24,7 +24,7 @@ public class MoveDiffCallback extends DiffUtil.ItemCallback<MoveItem> {
     public boolean areContentsTheSame(@NonNull MoveItem oldItem, @NonNull MoveItem newItem) {
         // Проверяем, что содержимое не изменилось
         // Сравниваем только те поля, которые отображаются в UI или влияют на его вид
-        
+
         // Сначала основные строковые поля, которые скорее всего не null
         if (!compareStrings(oldItem.getDate(), newItem.getDate())) return false;
         if (!compareStrings(oldItem.getNumber(), newItem.getNumber())) return false;
@@ -42,14 +42,17 @@ public class MoveDiffCallback extends DiffUtil.ItemCallback<MoveItem> {
         // Имена (могут быть null)
         if (!compareStrings(oldItem.getResponsiblePersonName(), newItem.getResponsiblePersonName())) return false;
         if (!compareStrings(oldItem.getAssemblerName(), newItem.getAssemblerName())) return false;
-        
+
         // Сравнение состояния CPS, если оно отображается или влияет на UI
         if (oldItem.isCps() != newItem.isCps()) return false;
+
+        // Сравнение состояния "Проведен"
+        if (oldItem.isCompleted() != newItem.isCompleted()) return false;
 
         // Если все проверки пройдены, содержимое одинаково
         return true;
     }
-    
+
     /**
      * Безопасное сравнение строк с учетом null
      */
@@ -57,4 +60,4 @@ public class MoveDiffCallback extends DiffUtil.ItemCallback<MoveItem> {
         if (str1 == null) return str2 == null;
         return str1.equals(str2);
     }
-} 
+}

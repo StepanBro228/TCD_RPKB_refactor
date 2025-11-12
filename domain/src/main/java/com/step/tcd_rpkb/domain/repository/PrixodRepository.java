@@ -13,7 +13,4 @@ public interface PrixodRepository {
      * @param callback Callback для получения результата.
      */
     void getPrixodDocument(String moveUuid, RepositoryCallback<Invoice> callback);
-
-    // Можно добавить другие методы, например, для сохранения данных прихода
-    // void savePrixodDocument(Invoice invoice, RepositoryCallback<Void> callback);
-} 
+}

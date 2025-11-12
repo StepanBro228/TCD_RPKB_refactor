@@ -257,10 +257,100 @@
                                 android:focusableInTouchMode="true"
                                 android:clickable="true"
                                 android:imeOptions="actionNext"
-                                android:nextFocusDown="@+id/filter_recipient" />
+                                android:nextFocusDown="@+id/filter_nomenculature" />
 
                             <ImageButton
                                 android:id="@+id/clear_movement_number"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                                android:contentDescription="Очистить" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Номенкулатура -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Номенкулатура: "
+                            android:textSize="14sp"
+                            android:textColor="@color/prixodTextSecondary" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginTop="4dp">
+
+                            <EditText
+                                android:id="@+id/filter_nomenculature"
+                                android:layout_width="0dp"
+                                android:layout_height="40dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/filter_edittext_background"
+                                android:paddingStart="8dp"
+                                android:paddingEnd="8dp"
+                                android:hint="Введите номенкулатуру"
+                                android:textSize="14sp"
+                                android:singleLine="true"
+                                android:imeOptions="actionNext"
+                                android:nextFocusDown="@+id/filter_series" />
+
+                            <ImageButton
+                                android:id="@+id/clear_nomenculature"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                                android:contentDescription="Очистить" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+
+                    <!-- Серия -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Серия:"
+                            android:textSize="14sp"
+                            android:textColor="@color/prixodTextSecondary" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginTop="4dp">
+
+                            <EditText
+                                android:id="@+id/filter_series"
+                                android:layout_width="0dp"
+                                android:layout_height="40dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/filter_edittext_background"
+                                android:paddingStart="8dp"
+                                android:paddingEnd="8dp"
+                                android:hint="Введите серию"
+                                android:inputType="number"
+                                android:textSize="14sp"
+                                android:singleLine="true"
+                                android:imeOptions="actionNext"
+                                android:nextFocusDown="@+id/filter_recipient" />
+
+                            <ImageButton
+                                android:id="@+id/clear_series"
                                 android:layout_width="40dp"
                                 android:layout_height="40dp"
                                 android:background="?attr/selectableItemBackgroundBorderless"
@@ -442,11 +532,45 @@
                     </LinearLayout>
 
                     <!-- Кнопки действий -->
-                    <FrameLayout
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:orientation="vertical"
                         android:layout_marginBottom="36dp">
 
+                        <!-- Кнопка "Применить фильтры" -->
+                        <TextView
+                            android:id="@+id/btn_apply_filters"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:background="@drawable/apply_button_background"
+                            android:text="ПРИМЕНИТЬ ФИЛЬТРЫ"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:gravity="center"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:layout_marginBottom="8dp"
+                            android:foreground="?android:attr/selectableItemBackground" />
+
+                        <!-- Кнопка "Установить по умолчанию" -->
+                        <TextView
+                            android:id="@+id/btn_set_default_filters"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:background="@drawable/default_button_background"
+                            android:text="СОХРАНИТЬ ФИЛЬТРЫ ПО УМОЛЧАНИЮ"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:gravity="center"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:layout_marginBottom="8dp"
+                            android:foreground="?android:attr/selectableItemBackground" />
+
+                        <!-- Кнопка "Сбросить фильтры" -->
                         <TextView
                             android:id="@+id/btn_reset_filters"
                             android:layout_width="match_parent"
@@ -460,7 +584,7 @@
                             android:clickable="true"
                             android:focusable="true"
                             android:foreground="?android:attr/selectableItemBackground" />
-                    </FrameLayout>
+                    </LinearLayout>
 
                     <!-- Пустое пространство в конце для предотвращения проблем с прокруткой -->
                     <View

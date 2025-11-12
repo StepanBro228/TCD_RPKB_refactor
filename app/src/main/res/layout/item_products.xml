@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="6dp"
+    android:layout_marginEnd="6dp"
+    android:layout_marginBottom="2dp"
+    android:layout_marginTop="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="#FFFFFF"
+    android:defaultFocusHighlightEnabled="false">
+
+    <LinearLayout
+        android:id="@+id/item_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:tag="item_view_root"
+        android:defaultFocusHighlightEnabled="false">
+
+        <!-- Верхняя часть: наименование и серия -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="8dp"
+            android:defaultFocusHighlightEnabled="false">
+
+            <TextView
+                android:id="@+id/list_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:text="Наименование"
+                android:textStyle="bold"
+                android:textColor="#333333" />
+
+            <LinearLayout
+                android:id="@+id/series_storage_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="2dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="2">
+
+                <!-- Серия: подпись -->
+                    <TextView
+                        android:id="@+id/list_series_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="16dp"
+                        android:text="Серия:"
+                        android:textColor="#666666"
+                        android:textSize="16sp"
+                        android:textStyle="italic"
+                        android:visibility="gone"
+                        tools:visibility="visible" />
+
+                    <!-- Серия: значение -->
+                    <TextView
+                        android:id="@+id/list_series"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="16dp"
+                        android:textColor="#666666"
+                        android:text="4523423423"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        tools:visibility="visible" />
+                </LinearLayout>
+
+                <!-- Ячейка: только значение -->
+                <TextView
+                    android:id="@+id/sender_storage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:textColor="#007aff"
+                    android:textSize="27sp"
+                    android:text="2-1-4"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+            </LinearLayout>
+            
+            <!-- Добавляем TextView для отображения ДокументРезерваПредставление -->
+            <TextView
+                android:id="@+id/reserve_document"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="#FF5722"
+                android:textStyle="italic"
+                android:layout_marginTop="2dp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Разделитель -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Средняя часть: количество, единица измерения и поле ввода -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Количество: "
+                    android:textStyle="bold"
+                    android:textColor="#4CAF50"
+                    android:textSize="16sp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/list_amount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="4532432"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#000000" />
+
+                    <TextView
+                        android:id="@+id/list_mesure"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="шт"
+                        android:textSize="16sp"
+                        android:textColor="#555555" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/take_editText_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/edit_text_default"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Взял: "
+                    android:textStyle="bold"
+                    android:textColor="#E91E63"
+                    android:textSize="15sp"
+                    android:layout_marginStart="6dp" />
+
+                <EditText
+                    android:id="@+id/carried"
+                    android:layout_width="60dp"
+                    android:layout_height="40dp"
+                    android:ems="4"
+                    android:inputType="number"
+                    android:hint="0"
+                    android:gravity="center"
+                    android:textColor="#000000"
+                    android:textSize="18sp"
+                    android:importantForAutofill="no"
+                    android:textAlignment="center"
+                    android:background="@null"
+                    android:layout_marginEnd="8dp"
+                    android:singleLine="true" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Разделитель -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Нижняя часть: остатки -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Остатки:"
+                android:textStyle="bold"
+                android:textColor="#FF9800"
+                android:textSize="16sp"
+                android:layout_marginBottom="4dp" />
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="4"
+                android:rowCount="4">
+
+                <!-- Первая строка -->
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="В ячейке:"
+                    android:textSize="13sp"
+                    android:textColor="#555555"
+                    android:layout_column="0"
+                    android:layout_row="0"
+                    android:layout_gravity="fill_horizontal"
+                    android:layout_columnWeight="1"
+                    android:layout_marginEnd="6dp"/>
+
+                <TextView
+                    android:id="@+id/cell_balance"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    android:layout_column="1"
+                    android:layout_row="0"
+                    android:layout_gravity="fill_horizontal"
+                    android:gravity="bottom"
+                    android:layout_columnWeight="2"
+                    android:layout_marginEnd="6dp"/>
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="По серии:"
+                    android:textSize="13sp"
+                    android:textColor="#555555"
+                    android:layout_column="2"
+                    android:layout_row="0"
+                    android:layout_gravity="fill_horizontal"
+                    android:layout_columnWeight="1"
+                    android:layout_marginEnd="6dp"/>
+
+                <TextView
+                    android:id="@+id/series_balance"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    android:layout_column="3"
+                    android:layout_row="0"
+                    android:gravity="bottom"
+                    android:layout_gravity="fill_horizontal"
+                    android:layout_columnWeight="2"/>
+
+                <!-- Вторая строка -->
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="Свобод.:"
+                    android:textSize="13sp"
+                    android:textColor="#555555"
+                    android:layout_column="0"
+                    android:layout_row="1"
+                    android:layout_gravity="fill_horizontal"
+                    android:layout_columnWeight="1.5"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="6dp"/>
+
+                <TextView
+                    android:id="@+id/free_balance"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    android:layout_column="1"
+                    android:layout_row="1"
+                    android:layout_gravity="fill_horizontal"
+                    android:layout_columnWeight="2"
+                    android:layout_marginTop="4dp"
+                    android:gravity="bottom"
+                    android:layout_marginEnd="6dp"/>
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="Общий:"
+                    android:textSize="13sp"
+                    android:textColor="#555555"
+                    android:layout_column="2"
+                    android:layout_row="1"
+                    android:layout_gravity="fill_horizontal"
+                    android:gravity="bottom"
+                    android:layout_columnWeight="1.5"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="6dp"/>
+
+                <TextView
+                    android:id="@+id/total_balance"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    android:layout_column="3"
+                    android:layout_row="1"
+                    android:gravity="bottom"
+                    android:layout_gravity="fill_horizontal"
+                    android:layout_columnWeight="2"
+                    android:layout_marginTop="4dp"/>
+            </GridLayout>
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

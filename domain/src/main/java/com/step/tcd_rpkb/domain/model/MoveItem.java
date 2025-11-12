@@ -1,43 +1,28 @@
 package com.step.tcd_rpkb.domain.model;
 
-// import com.google.gson.annotations.SerializedName;
+
 
 public class MoveItem {
-    // @SerializedName("ПеремещениеГУИД")
     private final String movementId;
-    // @SerializedName("ПеремещениеПредставление")
     private final String movementDisplayText;
-    // @SerializedName("ЦПС")
     private final boolean isCps;
-    // @SerializedName("Дата")
     private final String date;
-    // @SerializedName("Номер")
     private final String number;
-    // @SerializedName("Комментарий")
+    private final boolean isCompleted;
     private final String comment;
-    // @SerializedName("НоменклатураНаименование")
     private final String productName;
-    // @SerializedName("ОтветственныйЗаПолучениеНаименование")
     private final String responsiblePersonName;
-    // @SerializedName("Цвет")
     private final String color;
-    // @SerializedName("Приоритет")
     private final String priority;
-    // @SerializedName("КомплектовщикНаименование")
     private final String assemblerName;
-    // @SerializedName("СтатусПодписания")
     private  String signingStatus;
-    // @SerializedName("СкладОтправительНаименование")
     private final String sourceWarehouseName;
-    // @SerializedName("СкладПолучательНаименование")
     private final String destinationWarehouseName;
-    // @SerializedName("КолвоШтук")
     private final double itemsCount;
-    // @SerializedName("КолвоПозиций")
     private final int positionsCount;
 
     public MoveItem(String movementId, String movementDisplayText, boolean isCps, String date, 
-                    String number, String comment, String productName, String responsiblePersonName, 
+                    String number, boolean isCompleted, String comment, String productName, String responsiblePersonName, 
                     String color, String priority, String assemblerName, String signingStatus, 
                     String sourceWarehouseName, String destinationWarehouseName, 
                     double itemsCount, int positionsCount) {
@@ -46,6 +31,7 @@ public class MoveItem {
         this.isCps = isCps;
         this.date = date;
         this.number = number;
+        this.isCompleted = isCompleted;
         this.comment = comment;
         this.productName = productName;
         this.responsiblePersonName = responsiblePersonName;
@@ -63,12 +49,12 @@ public class MoveItem {
         this.signingStatus = signingStatus;
     }
 
-    // Геттеры
     public String getMovementId() { return movementId; }
     public String getMovementDisplayText() { return movementDisplayText; }
-    public boolean isCps() { return isCps; } // Для boolean геттер isCps(), а не getIsCps()
+    public boolean isCps() { return isCps; }
     public String getDate() { return date; }
     public String getNumber() { return number; }
+    public boolean isCompleted() { return isCompleted; }
     public String getComment() { return comment; }
     public String getProductName() { return productName; }
     public String getResponsiblePersonName() { return responsiblePersonName; }
@@ -81,6 +67,5 @@ public class MoveItem {
     public double getItemsCount() { return itemsCount; }
     public int getPositionsCount() { return positionsCount; }
 
-    // Метод hasCpsValue() был просто дубликатом isCps(), так что его можно убрать,
-    // если isCps() является стандартным геттером для boolean.
+
 } 

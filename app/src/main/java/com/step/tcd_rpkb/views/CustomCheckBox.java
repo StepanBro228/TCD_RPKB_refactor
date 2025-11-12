@@ -35,7 +35,7 @@ public class CustomCheckBox extends FrameLayout implements Checkable {
     }
 
     private void init(Context context) {
-        View view = LayoutInflater.from(context).inflate(R.layout.view_custom_checkbox, this, true);
+        View view = LayoutInflater.from(context).inflate(R.layout.view_custom_checkbox_movelist, this, true);
         container = view.findViewById(R.id.checkbox_container);
         checkIcon = view.findViewById(R.id.check_icon);
         

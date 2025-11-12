@@ -3,18 +3,41 @@ package com.step.tcd_rpkb.data.network.dto;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
-// DTO для Invoice. Структура соответствует JSON.
+
 public class InvoiceDto {
+    @SerializedName("ТекстОшибки")
+    private String errorText;
+    
+    @SerializedName("Результат")
+    private boolean result;
+    
     @SerializedName("ГУИДПеремещения")
     private String moveUuid;
     
     @SerializedName("Данные")
-    private List<ProductDto> products; // Используем ProductDto
+    private List<ProductDto> products;
 
     // Пустой конструктор для Gson
     public InvoiceDto() {}
 
-    // Геттеры и Сеттеры (или только геттеры, если объект не меняется после создания Gson'ом)
+    // Геттеры и Сеттеры для новых полей
+    public String getErrorText() { 
+        return errorText; 
+    }
+    
+    public void setErrorText(String errorText) { 
+        this.errorText = errorText; 
+    }
+    
+    public boolean isResult() { 
+        return result; 
+    }
+    
+    public void setResult(boolean result) { 
+        this.result = result; 
+    }
+
+    // Геттеры и Сеттеры для существующих полей
     public String getMoveUuid() {
         return moveUuid;
     }

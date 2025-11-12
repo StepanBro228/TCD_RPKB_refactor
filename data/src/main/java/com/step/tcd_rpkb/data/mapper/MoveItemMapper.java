@@ -19,6 +19,7 @@ public class MoveItemMapper {
                 dto.isCps(),
                 dto.getDate(),
                 dto.getNumber(),
+                dto.isCompleted(),
                 dto.getComment(),
                 dto.getProductName(),
                 dto.getResponsiblePersonName(),
@@ -50,6 +51,7 @@ public class MoveItemMapper {
         dto.setCps(domain.isCps());
         dto.setDate(domain.getDate());
         dto.setNumber(domain.getNumber());
+        dto.setCompleted(domain.isCompleted());
         dto.setComment(domain.getComment());
         dto.setProductName(domain.getProductName());
         dto.setResponsiblePersonName(domain.getResponsiblePersonName());

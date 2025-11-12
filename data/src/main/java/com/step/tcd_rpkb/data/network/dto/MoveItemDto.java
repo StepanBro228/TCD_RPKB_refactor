@@ -13,6 +13,8 @@ public class MoveItemDto {
     private String date;
     @SerializedName("Номер")
     private String number;
+    @SerializedName("Проведен")
+    private boolean isCompleted;
     @SerializedName("Комментарий")
     private String comment;
     @SerializedName("НоменклатураНаименование")
@@ -36,10 +38,9 @@ public class MoveItemDto {
     @SerializedName("КолвоПозиций")
     private int positionsCount;
 
-    // Пустой конструктор для Gson
+
     public MoveItemDto() {}
 
-    // Геттеры и Сеттеры (можно оставить только геттеры)
     public String getMovementId() { return movementId; }
     public void setMovementId(String movementId) { this.movementId = movementId; }
     public String getMovementDisplayText() { return movementDisplayText; }
@@ -50,6 +51,10 @@ public class MoveItemDto {
     public void setDate(String date) { this.date = date; }
     public String getNumber() { return number; }
     public void setNumber(String number) { this.number = number; }
+
+    public boolean isCompleted() { return isCompleted; }
+
+    public void setCompleted(boolean completed) { this.isCompleted = completed; }
     public String getComment() { return comment; }
     public void setComment(String comment) { this.comment = comment; }
     public String getProductName() { return productName; }

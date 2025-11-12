@@ -3,6 +3,10 @@ package com.step.tcd_rpkb.data.network.dto;
 import com.google.gson.annotations.SerializedName;
 
 public class ProductDto {
+    @SerializedName("УИДСтрокиТовары")
+    private String productLineId; // Уникальный идентификатор строки товара
+    @SerializedName("УИДСтрокиТоварыРодитель")
+    private String parentProductLineId; // UUID строки товара родителя (для копий)
     @SerializedName("НоменклатураГУИД")
     private String nomenclatureUuid;
     @SerializedName("НоменклатураНаименование")
@@ -46,12 +50,18 @@ public class ProductDto {
     @SerializedName("ОбщийОстаток")
     private double totalBalance;
     @SerializedName("Взял")
-    private int taken;
+    private double taken;
+    @SerializedName("Exists")
+    private boolean exists = true;
 
-    // Пустой конструктор для Gson
+
     public ProductDto() {}
 
-    // Геттеры и сеттеры (оставим для простоты, хотя для DTO часто достаточно геттеров)
+
+    public String getProductLineId() { return productLineId; }
+    public void setProductLineId(String productLineId) { this.productLineId = productLineId; }
+    public String getParentProductLineId() { return parentProductLineId; }
+    public void setParentProductLineId(String parentProductLineId) { this.parentProductLineId = parentProductLineId; }
     public String getNomenclatureUuid() { return nomenclatureUuid; }
     public void setNomenclatureUuid(String nomenclatureUuid) { this.nomenclatureUuid = nomenclatureUuid; }
     public String getNomenclatureName() { return nomenclatureName; }
@@ -94,6 +104,8 @@ public class ProductDto {
     public void setFreeBalance(double freeBalance) { this.freeBalance = freeBalance; }
     public double getTotalBalance() { return totalBalance; }
     public void setTotalBalance(double totalBalance) { this.totalBalance = totalBalance; }
-    public int getTaken() { return taken; }
-    public void setTaken(int taken) { this.taken = taken; }
+    public double getTaken() { return taken; }
+    public void setTaken(double taken) { this.taken = taken; }
+    public boolean getExists() { return exists; }
+    public void setExists(boolean exists) { this.exists = exists; }
 } 

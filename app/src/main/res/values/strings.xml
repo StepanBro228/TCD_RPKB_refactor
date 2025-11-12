@@ -1,3 +1,36 @@
 <resources>
     <string name="app_name">TCD_RPKB_refactor</string>
+    <!-- Строки для экрана подбора серий -->
+    <string name="series_selection_title">Подбор серии для: %1$s</string>
+    <string name="series_name">Серия</string>
+    <string name="expiry_date">Срок годности</string>
+    <string name="free_balance">Свободно</string>
+    <string name="reserved_by_others">Резерв</string>
+    <string name="document_quantity">В док-те</string>
+    <string name="allocated_quantity">Распред.</string>
+    <string name="document_quantity_total">Количество в документе: %.1f</string>
+    <string name="allocated_quantity_total">Распределено: %.1f</string>
+    <string name="allocated_percent">%d%%</string>
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отмена</string>
+    <string name="enter_quantity">Кол-во</string>
+    <string name="back_button_description">Кнопка назад</string>
+    
+    <!-- Строки для экрана резервирования ЗНП -->
+    <string name="znp_reservation_title">Резервирование ЗНП</string>
+    <string name="znp_selection_title">Выбор ЗНП для резервирования</string>
+    <string name="series_info">Информация о серии</string>
+    <string name="series_label">Серия:</string>
+    <string name="nomenclature">Номенклатура:</string>
+    <string name="storage">Склад:</string>
+    <string name="unit_of_measure">Ед. изм.:</string>
+    <string name="free_balance_label">Свободный остаток:</string>
+    <string name="total_reserved">Всего зарезервировано:</string>
+    <string name="znp_orders">Заказы ЗНП</string>
+    <string name="to_ensure">К обеспечению:</string>
+    <string name="reserved_by_others_label">Резерв других:</string>
+    <string name="reserved">Резервировать:</string>
+    <string name="znp_reservation">Резервирование ЗНП</string>
+    <string name="znp_selection_button">Выбор ЗНП</string>
+    <string name="save_success">Данные успешно сохранены</string>
 </resources>

@@ -4,6 +4,12 @@ import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 public class MoveResponseDto {
+    @SerializedName("ТекстОшибки")
+    private String errorText;
+    @SerializedName("Результат")
+    private boolean result;
+    @SerializedName("state")
+    private String state;
     @SerializedName("ДатаНачала")
     private String startDate;
     @SerializedName("ДатаОкончания")
@@ -11,12 +17,18 @@ public class MoveResponseDto {
     @SerializedName("МассивСостоянийСтрокой")
     private List<String> statusList;
     @SerializedName("Данные")
-    private List<MoveItemDto> items; // Используем MoveItemDto
+    private List<MoveItemDto> items;
 
-    // Пустой конструктор для Gson
+
     public MoveResponseDto() {}
 
     // Геттеры и Сеттеры
+    public String getErrorText() { return errorText; }
+    public void setErrorText(String errorText) { this.errorText = errorText; }
+    public boolean isResult() { return result; }
+    public void setResult(boolean result) { this.result = result; }
+    public String getState() { return state; }
+    public void setState(String state) { this.state = state; }
     public String getStartDate() { return startDate; }
     public void setStartDate(String startDate) { this.startDate = startDate; }
     public String getEndDate() { return endDate; }

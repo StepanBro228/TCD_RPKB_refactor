@@ -1,0 +1,30 @@
+{
+  "seriesUuid": "a86a2db2-86dd-11e6-80f6-00155d00160l",
+  "seriesName": "00828140694",
+  "warehouse": "Склад №1",
+  "unitOfMeasurement": "шт",
+  "freeBalance": 10.0,
+  "znpOrders": [
+    {
+      "znpNumber": "ГН_004",
+      "fromDate": "2024-02-01",
+      "quantityToProcure": 7.0,
+      "reserve": 0.0,
+      "reserveByOthers": 0.0
+    },
+    {
+      "znpNumber": "ГН_005", 
+      "fromDate": "2024-02-05",
+      "quantityToProcure": 2.0,
+      "reserve": 0.0,
+      "reserveByOthers": 0.0
+    },
+    {
+      "znpNumber": "ГН_006",
+      "fromDate": "2024-02-10", 
+      "quantityToProcure": 1.0,
+      "reserve": 0.0,
+      "reserveByOthers": 0.0
+    }
+  ]
+} 

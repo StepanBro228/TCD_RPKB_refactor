@@ -1,0 +1,37 @@
+{
+  "seriesUuid": "a86a2db2-86dd-11e6-80f6-00155d00160d",
+  "seriesName": "00828140624",
+  "warehouse": "Склад №2",
+  "unitOfMeasurement": "кг",
+  "freeBalance": 5,
+  "znpOrders": [
+    {
+      "znpNumber": "ГН_030",
+      "fromDate": "2024-02-15",
+      "quantityToProcure": 2.0,
+      "reserve": 0.0,
+      "reserveByOthers": 0.0
+    },
+    {
+      "znpNumber": "ГН_090",
+      "fromDate": "2024-02-18",
+      "quantityToProcure": 1.0,
+      "reserve": 0.0,
+      "reserveByOthers": 0.0
+    },
+    {
+      "znpNumber": "ГН_040",
+      "fromDate": "2024-02-20",
+      "quantityToProcure": 1.0,
+      "reserve": 0.0,
+      "reserveByOthers": 0.0
+    },
+    {
+      "znpNumber": "ГН_011",
+      "fromDate": "2024-02-25",
+      "quantityToProcure": 1.0,
+      "reserve": 0.0,
+      "reserveByOthers": 0.0
+    }
+  ]
+}

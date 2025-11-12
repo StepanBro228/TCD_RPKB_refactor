@@ -19,6 +19,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,7 +28,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.step.tcd_rpkb.R;
-import com.step.tcd_rpkb.UI.main.activity.MainViewModel;
+import com.step.tcd_rpkb.UI.main.viewmodel.MainViewModel;
 
 /**
  * Диалог для ввода учетных данных и выбора режима работы
@@ -39,6 +40,11 @@ public class LoginDialogFragment extends DialogFragment {
     private RadioGroup rgMode;
     private RadioButton rbOnline;
     private RadioButton rbOffline;
+    private EditText etDataBase;
+    private EditText etDeviceNum;
+
+    private TextView baseTitle;
+
     private ProgressBar progressBar;
     private TextView tvStatus;
     private View rootView;
@@ -88,6 +94,12 @@ public class LoginDialogFragment extends DialogFragment {
         if (!viewModel.password.getValue().isEmpty() && viewModel.password.getValue() != null){
             etPassword.setText((viewModel.password.getValue()));
         }
+        if(!viewModel.databaseURL.getValue().isEmpty() && viewModel.databaseURL.getValue() != null){
+            etDataBase.setText(viewModel.databaseURL.getValue());
+        }
+        if(!viewModel.deviceNum.getValue().isEmpty() && viewModel.deviceNum.getValue() != null){
+            etDeviceNum.setText(viewModel.deviceNum.getValue());
+        }
         setupSaveButton(dialog);
         
         return dialog;
@@ -102,19 +114,36 @@ public class LoginDialogFragment extends DialogFragment {
     private void bindViews() {
         etUsername = rootView.findViewById(R.id.etUsername);
         etPassword = rootView.findViewById(R.id.etPassword);
+        etDeviceNum = rootView.findViewById(R.id.etDeviceNum);
         rgMode = rootView.findViewById(R.id.rgMode);
         rbOnline = rootView.findViewById(R.id.rbOnline);
         rbOffline = rootView.findViewById(R.id.rbOffline);
+        etDataBase = rootView.findViewById(R.id.DataBaseURl);
         progressBar = rootView.findViewById(R.id.progressBar);
         tvStatus = rootView.findViewById(R.id.tvStatus);
         btnCheckServer = rootView.findViewById(R.id.btnCheckServer);
         layoutAuth = rootView.findViewById(R.id.layoutAuth);
+        baseTitle = rootView.findViewById(R.id.baseTitle);
+
+        // Восстанавливаем значения RadioButton из ViewModel
+        if (viewModel.isOnlineMode.getValue() != null) {
+            if (viewModel.isOnlineMode.getValue()) {
+                rbOnline.setChecked(true);
+            } else {
+                rbOffline.setChecked(true);
+            }
+        }
+
+        // видимость блоков в зависимости от режима
+        boolean isOnline = viewModel.isOnlineMode.getValue() != null && viewModel.isOnlineMode.getValue();
+        updateAuthFieldsVisibility(isOnline);
     }
     
     private void observeViewModel() {
         viewModel.username.observe(getViewLifecycleOwner(), uname -> etUsername.setText(uname));
         viewModel.password.observe(getViewLifecycleOwner(), pwd -> etPassword.setText(pwd));
-        
+        viewModel.databaseURL.observe(getViewLifecycleOwner(), URL -> etDataBase.setText(URL));
+        viewModel.deviceNum.observe(getViewLifecycleOwner(), num-> etDeviceNum.setText(num));
         viewModel.isOnlineMode.observe(getViewLifecycleOwner(), isOnline -> {
             if (isOnline) {
                 rbOnline.setChecked(true);
@@ -123,6 +152,7 @@ public class LoginDialogFragment extends DialogFragment {
             }
             updateAuthFieldsVisibility(isOnline);
         });
+
 
         viewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
             progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
@@ -151,14 +181,21 @@ public class LoginDialogFragment extends DialogFragment {
         rgMode.setOnCheckedChangeListener((group, checkedId) -> {
             boolean online = (checkedId == R.id.rbOnline);
             viewModel.onOnlineModeChanged(online);
+            updateAuthFieldsVisibility(online);
         });
+
         
         btnCheckServer.setOnClickListener(v -> {
+            Log.d("LoginDialogFragment", "Нажата кнопка 'Проверка сервера'");
+            String URL = etDataBase.getText().toString();
+            Log.d("LoginDialogFragment", "Текущий выбор базы данных: " + URL);
+            
             hideKeyboard();
             clearFocus();
             viewModel.checkServerAvailability(
-                etUsername.getText().toString().trim(),
-                etPassword.getText().toString().trim()
+                    etUsername.getText().toString().trim(),
+                    etPassword.getText().toString().trim(),
+                    etDeviceNum.getText().toString().trim()
             );
         });
 
@@ -169,8 +206,9 @@ public class LoginDialogFragment extends DialogFragment {
                 clearFocus();
                 if (rbOnline.isChecked()) {
                     viewModel.checkServerAvailability(
-                        etUsername.getText().toString().trim(),
-                        etPassword.getText().toString().trim()
+                            etUsername.getText().toString().trim(),
+                            etPassword.getText().toString().trim(),
+                            etDeviceNum.getText().toString().trim()
                     );
                  }
                 return true;
@@ -185,7 +223,14 @@ public class LoginDialogFragment extends DialogFragment {
             saveButton.setOnClickListener(view1 -> {
                 String username = etUsername.getText().toString().trim();
                 String password = etPassword.getText().toString().trim();
+                String deviceNum = etDeviceNum.getText().toString().trim();
                 boolean onlineMode = rbOnline.isChecked();
+                String DataBaseURL = etDataBase.getText().toString();
+                
+                Log.d("LoginDialogFragment", "Нажата кнопка ОК с настройками:");
+                Log.d("LoginDialogFragment", "  - Режим: " + (onlineMode ? "онлайн" : "оффлайн"));
+                Log.d("LoginDialogFragment", "  - База данных: " + DataBaseURL);
+                Log.d("LoginDialogFragment", "  - Пользователь: " + username);
                 
                 hideKeyboard();
                 
@@ -194,10 +239,10 @@ public class LoginDialogFragment extends DialogFragment {
                     return;
                 }
                 
-                viewModel.handleLoginResult(username, password, onlineMode);
+                viewModel.handleLoginResult(username, password, deviceNum, onlineMode, DataBaseURL);
                 
                 if (listener != null) {
-                    listener.onLoginDialogPositiveClick(username, password, onlineMode);
+                    listener.onLoginDialogPositiveClick(username, password, deviceNum, onlineMode, DataBaseURL);
                 }
                 
                 dialog.dismiss();
@@ -209,6 +254,11 @@ public class LoginDialogFragment extends DialogFragment {
         layoutAuth.setVisibility(online ? View.VISIBLE : View.GONE);
         btnCheckServer.setVisibility(online ? View.VISIBLE : View.GONE);
         
+        // Показываем выбор базы данных и логин, пароль только в онлайн режиме
+        etDataBase.setVisibility(online ? View.VISIBLE : View.GONE);
+        etUsername.setVisibility(online ? View.VISIBLE : View.GONE);
+        etPassword.setVisibility(online ? View.VISIBLE : View.GONE);
+        baseTitle.setVisibility(online ? View.VISIBLE : View.GONE);
         if (!online) {
             tvStatus.setVisibility(View.GONE);
             progressBar.setVisibility(View.GONE);
@@ -280,6 +330,6 @@ public class LoginDialogFragment extends DialogFragment {
     }
     
     public interface LoginDialogListener {
-        void onLoginDialogPositiveClick(String username, String password, boolean onlineMode);
+        void onLoginDialogPositiveClick(String username, String password, String deviceNum, boolean onlineMode, String URL);
     }
 } 

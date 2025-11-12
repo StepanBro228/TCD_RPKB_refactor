@@ -12,9 +12,7 @@ import com.step.tcd_rpkb.R;
 
 public class AvatarUtils {
 
-    private AvatarUtils() {
-        // Приватный конструктор, так как это утилитный класс
-    }
+
 
     /**
      * Создает текстовый аватар с инициалами пользователя
@@ -23,32 +21,32 @@ public class AvatarUtils {
      * @return Drawable с аватаром
      */
     public static Drawable createTextAvatar(Context context, String text) {
-        // Общие настройки
-        int size = (int) (26 * context.getResources().getDisplayMetrics().density); // Размер из UserManager
+
+        int size = (int) (26 * context.getResources().getDisplayMetrics().density);
         Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
 
-        // Рисуем красивый фон с градиентом (из UserManager)
+        // Рисуем фон с градиентом
         Drawable background = context.getResources().getDrawable(R.drawable.custom_avatar_background);
         background.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         background.draw(canvas);
 
-        // Настраиваем стиль текста (из UserManager)
+        // Настраиваем стиль текста
         Paint paint = new Paint();
         paint.setColor(Color.WHITE);
-        paint.setTextSize(size / 2f); // Использовал size / 2f для точности
+        paint.setTextSize(size / 2f);
         paint.setAntiAlias(true);
         paint.setTextAlign(Paint.Align.CENTER);
         paint.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
 
-        // Центрируем текст (из UserManager)
+        // Центрируем текст
         float xPos = canvas.getWidth() / 2f;
         float yPos = (canvas.getHeight() / 2f) - ((paint.descent() + paint.ascent()) / 2f);
 
         // Рисуем текст
         canvas.drawText(text, xPos, yPos, paint);
 
-        // Преобразуем Bitmap в Drawable
+
         return new android.graphics.drawable.BitmapDrawable(context.getResources(), bitmap);
     }
 
@@ -58,24 +56,24 @@ public class AvatarUtils {
      * @return Инициалы (1-2 символа)
      */
     public static String getInitials(String fullName) {
-        if (fullName == null || fullName.trim().isEmpty()) { // Добавил trim()
+        if (fullName == null || fullName.trim().isEmpty()) {
             return "?";
         }
 
-        String[] parts = fullName.trim().split("\\s+"); // Используем \s+ для разделения по любому пробельному символу
+        String[] parts = fullName.trim().split("\\s+");
         StringBuilder initials = new StringBuilder();
 
-        // Берем первую букву имени
+
         if (parts.length > 0 && !parts[0].isEmpty()) {
             initials.append(parts[0].charAt(0));
         }
 
-        // Берем первую букву фамилии, если есть (вторая часть имени)
+
         if (parts.length > 1 && !parts[1].isEmpty()) {
             initials.append(parts[1].charAt(0));
         }
         
-        if (initials.length() == 0) { // Если после всех попыток инициалы пусты (например, имя состоит из пробелов)
+        if (initials.length() == 0) {
             return "?";
         }
 

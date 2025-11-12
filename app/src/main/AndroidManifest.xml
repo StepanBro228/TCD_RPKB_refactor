@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:name=".MainApplication"
@@ -22,14 +23,14 @@
 
 
         <activity
-            android:name=".UI.movelist.activity.MoveList_menu"
+            android:name=".UI.movelist.activity.MoveListActivity"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
             android:name=".Peredacha_LVC"
             android:exported="false" />
         <activity
-            android:name=".UI.Prixod.PrixodActivity"
+            android:name=".UI.Prixod.activity.ProductsActivity"
             android:exported="false"
             />
         <activity
@@ -42,7 +43,7 @@
             android:name=".LC_menu"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
+            android:name=".UI.main.activity.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -52,6 +53,13 @@
 
 
         </activity>
+        <activity
+            android:name=".UI.Serias.activity.SeriesSelectionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".UI.ZnpSelection.activity.ZnpSelectionActivity"
+            android:exported="false" />
+
 
 
     </application>

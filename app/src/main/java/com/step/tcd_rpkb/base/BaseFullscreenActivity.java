@@ -27,7 +27,6 @@ public class BaseFullscreenActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         // Включаем полноэкранный режим при возобновлении активности
-        // (это также будет вызвано после onCreate)
         enableFullScreen();
     }
 
