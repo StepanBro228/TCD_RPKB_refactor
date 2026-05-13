@@ -702,72 +702,19 @@ public class ZnpSelectionActivity extends BaseFullscreenActivity {
     }
     
     /**
-     * Создает резервную копию продуктов для возможности отката
+     * Резервное копирование больше не нужно: данные в Realm не изменяются
+     * до момента подтверждения пользователем. ViewModel хранит изменения в памяти.
      */
     private void createProductsBackup() {
-        if (moveUuid != null && !moveUuid.isEmpty()) {
-            com.step.tcd_rpkb.utils.ProductsDataManager productsDataManager = 
-                new com.step.tcd_rpkb.utils.ProductsDataManager(this);
-            
-            // Загружаем текущие продукты
-            List<com.step.tcd_rpkb.domain.model.Product> currentProducts = productsDataManager.loadProductsData(moveUuid);
-            
-            if (!currentProducts.isEmpty()) {
-                // Сохраняем копию
-                String backupKey = moveUuid + BACKUP_SUFFIX;
-                boolean saved = productsDataManager.saveProductsData(backupKey, currentProducts);
-                
-                if (saved) {
-                    Log.d(TAG, "Создана резервная копия продуктов для moveUuid: " + moveUuid);
-                } else {
-                    Log.e(TAG, "Ошибка создания резервной копии продуктов");
-                }
-            }
-        }
+        Log.d(TAG, "createProductsBackup: not needed with Realm, skipping");
     }
-    
-    /**
-     * Восстанавливает продукты из резервной копии
-     */
+
     private void restoreProductsFromBackup() {
-        if (moveUuid != null && !moveUuid.isEmpty()) {
-            com.step.tcd_rpkb.utils.ProductsDataManager productsDataManager = 
-                new com.step.tcd_rpkb.utils.ProductsDataManager(this);
-            
-            String backupKey = moveUuid + BACKUP_SUFFIX;
-            
-
-            List<com.step.tcd_rpkb.domain.model.Product> backupProducts = productsDataManager.loadProductsData(backupKey);
-            
-            if (!backupProducts.isEmpty()) {
-                boolean restored = productsDataManager.saveProductsData(moveUuid, backupProducts);
-                
-                if (restored) {
-                    Log.d(TAG, "Продукты восстановлены из резервной копии для moveUuid: " + moveUuid);
-                } else {
-                    Log.e(TAG, "Ошибка восстановления продуктов из резервной копии");
-                }
-            }
-
-            cleanupProductsBackup();
-        }
+        Log.d(TAG, "restoreProductsFromBackup: not needed with Realm, skipping");
     }
-    
-    /**
-     * Удаляет резервную копию продуктов
-     */
+
     private void cleanupProductsBackup() {
-        if (moveUuid != null && !moveUuid.isEmpty()) {
-            com.step.tcd_rpkb.utils.ProductsDataManager productsDataManager = 
-                new com.step.tcd_rpkb.utils.ProductsDataManager(this);
-            
-            String backupKey = moveUuid + BACKUP_SUFFIX;
-            boolean deleted = productsDataManager.deleteProductsData(backupKey);
-            
-            if (deleted) {
-                Log.d(TAG, "Резервная копия продуктов удалена");
-            }
-        }
+        Log.d(TAG, "cleanupProductsBackup: not needed with Realm, skipping");
     }
     
     @Override

@@ -52,11 +52,29 @@ public class DynamicBaseUrlInterceptor implements Interceptor {
         boolean isAuthorization = originalUrlStr.contains("rpkb_autorization");
         boolean isProductSeries = originalUrlStr.contains("ProductSeries");
         
-
         if (isAuthorization) {
-            Log.d(TAG, "Определен запрос типа авторизация - возвращаем без изменений");
-            Log.d(TAG, "Оригинальный URL авторизации: " + originalUrl);
-            return chain.proceed(originalRequest);
+            // Для авторизации строим URL: baseUrl + /hs/rpkb_autorization + query параметры
+            Log.d(TAG, "Определен запрос типа авторизация");
+            
+            // Добавляем путь авторизации
+            urlBuilder.addPathSegment("hs");
+            urlBuilder.addPathSegment("rpkb_autorization");
+            
+            // Добавляем все query параметры из оригинального запроса
+            for (int i = 0; i < originalUrl.querySize(); i++) {
+                String name = originalUrl.queryParameterName(i);
+                String value = originalUrl.queryParameterValue(i);
+                urlBuilder.addQueryParameter(name, value);
+                Log.d(TAG, "Авторизация - параметр: " + name + "=" + value);
+            }
+            
+            HttpUrl authUrl = urlBuilder.build();
+            Log.d(TAG, "Итоговый URL авторизации: " + authUrl);
+            
+            Request newRequest = originalRequest.newBuilder()
+                    .url(authUrl)
+                    .build();
+            return chain.proceed(newRequest);
         }
         
 

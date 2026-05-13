@@ -19,11 +19,11 @@ import com.step.tcd_rpkb.domain.model.Invoice;
 import com.step.tcd_rpkb.domain.model.MoveItem;
 import com.step.tcd_rpkb.domain.model.Product;
 import com.step.tcd_rpkb.domain.repository.MoveRepository;
+import com.step.tcd_rpkb.domain.repository.ProductsRepository;
 import com.step.tcd_rpkb.domain.repository.RepositoryCallback;
 import com.step.tcd_rpkb.domain.usecase.GetPrixodDocumentUseCase;
 import com.step.tcd_rpkb.domain.usecase.GetUserUseCase;
 import com.step.tcd_rpkb.utils.Event;
-import com.step.tcd_rpkb.utils.ProductsDataManager;
 import com.step.tcd_rpkb.utils.SeriesDataManager;
 
 import java.lang.reflect.Type;
@@ -48,7 +48,7 @@ public class ProductsViewModel extends BaseViewModel {
 
     private final ProductMapper productMapper;
     private final Gson gson;
-    private final ProductsDataManager productsDataManager;
+    private final ProductsRepository productsRepository;
     private final SeriesDataManager seriesDataManager;
 
     // LiveData для UI
@@ -243,12 +243,12 @@ public class ProductsViewModel extends BaseViewModel {
                              ProductMapper productMapper,
                              Gson gson,
                              MoveRepository moveRepository,
-                             ProductsDataManager productsDataManager,
+                             ProductsRepository productsRepository,
                              SeriesDataManager seriesDataManager) {
         this.getPrixodDocumentUseCase = getPrixodDocumentUseCase;
         this.productMapper = productMapper;
         this.gson = gson;
-        this.productsDataManager = productsDataManager;
+        this.productsRepository = productsRepository;
         this.seriesDataManager = seriesDataManager;
     }
 
@@ -290,21 +290,32 @@ public class ProductsViewModel extends BaseViewModel {
                               ", preserveEditedData=" + preserveEditedData + 
                               ", moveItem=" + (moveItem != null ? "передан" : "null"));
         
-
-        List<Product> cachedProducts = productsDataManager.loadProductsData(moveUuid);
-        if (!cachedProducts.isEmpty()) {
-            Log.d("PrixodViewModel", "Найдены кэшированные продукты для перемещения " + moveUuid + ": " + cachedProducts.size() + " продуктов");
+        // Сначала пытаемся загрузить из Realm кэша
+        productsRepository.loadProducts(moveUuid, new RepositoryCallback<List<Product>>() {
+            @Override
+            public void onSuccess(List<Product> cachedProducts) {
+                if (cachedProducts != null && !cachedProducts.isEmpty()) {
+                    Log.d("PrixodViewModel", "Найдены кэшированные продукты в Realm для перемещения " + moveUuid + ": " + cachedProducts.size() + " продуктов");
+                    
+                    Invoice cachedInvoice = new Invoice(moveUuid, cachedProducts);
+                    processLoadedDataFromCache(cachedInvoice, productsJson, preserveEditedData, moveItem);
+                } else {
+                    // Если кеша нет - загружаем с сервера
+                    Log.d("PrixodViewModel", "Кэш продуктов пуст в Realm, загружаем с сервера для перемещения " + moveUuid);
+                    loadFromServer(moveUuid, productsJson, preserveEditedData, moveItem);
+                }
+            }
             
-
-            Invoice cachedInvoice = new Invoice(moveUuid, cachedProducts);
-            
-
-            processLoadedDataFromCache(cachedInvoice, productsJson, preserveEditedData, moveItem);
-            return;
-        }
-        
-        // Если кеша нет - загружаем с сервера
-        Log.d("PrixodViewModel", "Кэш продуктов пуст, загружаем с сервера для перемещения " + moveUuid);
+            @Override
+            public void onError(Exception e) {
+                Log.e("PrixodViewModel", "Ошибка загрузки кэша из Realm: " + e.getMessage());
+                // При ошибке загружаем с сервера
+                loadFromServer(moveUuid, productsJson, preserveEditedData, moveItem);
+            }
+        });
+    }
+    
+    private void loadFromServer(String moveUuid, String productsJson, boolean preserveEditedData, MoveItem moveItem) {
         getPrixodDocumentUseCase.execute(moveUuid, new RepositoryCallback<Invoice>() {
             @Override
             public void onSuccess(Invoice invoice) {
@@ -410,9 +421,18 @@ public class ProductsViewModel extends BaseViewModel {
                     updateReadOnlyMode(currentStatus);
                 }
                 
-                // Сохраняем продукты в кеш при успешной загрузке с сервера
-                productsDataManager.saveProductsData(moveUuid, loadedProducts);
-                Log.d("PrixodViewModel", "Продукты сохранены в кеш для перемещения: " + moveUuid);
+                // Сохраняем продукты в Realm при успешной загрузке с сервера
+                productsRepository.saveProducts(moveUuid, loadedProducts, new RepositoryCallback<Boolean>() {
+                    @Override
+                    public void onSuccess(Boolean result) {
+                        Log.d("PrixodViewModel", "Продукты сохранены в Realm для перемещения: " + moveUuid);
+                    }
+                    
+                    @Override
+                    public void onError(Exception e) {
+                        Log.e("PrixodViewModel", "Ошибка сохранения продуктов в Realm: " + e.getMessage());
+                    }
+                });
 
                 _dataSuccessfullyLoadedEvent.setValue(new Event<>(true));
             }
@@ -516,10 +536,18 @@ public class ProductsViewModel extends BaseViewModel {
             updateReadOnlyMode(currentStatus);
         }
         
-
-        productsDataManager.saveProductsData(invoice.getUuid(), loadedProducts);
-        Log.d("PrixodViewModel", "Продукты обновлены в кеше для перемещения: " + invoice.getUuid());
-        
+        // Сохраняем продукты в Realm
+        productsRepository.saveProducts(invoice.getUuid(), loadedProducts, new RepositoryCallback<Boolean>() {
+            @Override
+            public void onSuccess(Boolean result) {
+                Log.d("PrixodViewModel", "Продукты обновлены в Realm для перемещения: " + invoice.getUuid());
+            }
+            
+            @Override
+            public void onError(Exception e) {
+                Log.e("PrixodViewModel", "Ошибка сохранения продуктов в Realm: " + e.getMessage());
+            }
+        });
 
         _dataSuccessfullyLoadedEvent.setValue(new Event<>(true));
         
@@ -1365,6 +1393,26 @@ public class ProductsViewModel extends BaseViewModel {
                   
             // Отладочное логирование после изменения данных
             logAllTakenValues("ПОСЛЕ_ИЗМЕНЕНИЯ_ДАННЫХ_" + productLineId);
+            
+            // Автосохранение измененного продукта в Realm
+            if (currentMoveUuid != null && !currentMoveUuid.isEmpty()) {
+                for (Product p : originalProductList) {
+                    if (java.util.Objects.equals(productLineId, p.getProductLineId())) {
+                        productsRepository.saveProduct(currentMoveUuid, p, new RepositoryCallback<Boolean>() {
+                            @Override
+                            public void onSuccess(Boolean result) {
+                                Log.d("PrixodViewModel", "Продукт автоматически сохранен в Realm: " + productLineId + ", taken=" + p.getTaken());
+                            }
+                            
+                            @Override
+                            public void onError(Exception e) {
+                                Log.e("PrixodViewModel", "Ошибка автосохранения продукта в Realm: " + e.getMessage());
+                            }
+                        });
+                        break;
+                    }
+                }
+            }
                   
             new Handler(Looper.getMainLooper()).post(() -> {
 
@@ -1605,21 +1653,24 @@ public class ProductsViewModel extends BaseViewModel {
     private void returnToMenuWithStatusChange() {
         Log.d("PrixodViewModel", "Возвращаемся в меню для смены статуса на 'Подготовлен'");
         
-        // Сначала сохраняем продукты во временный файл
-        // чтобы актуальные значения taken попали в JSON для document_save
+        // Сначала сохраняем продукты в Realm
+        // чтобы актуальные значения taken попали в базу для document_save
         if (currentMoveUuid != null && !currentMoveUuid.isEmpty() && originalProductList != null) {
-            boolean saved = productsDataManager.saveProductsData(currentMoveUuid, originalProductList);
-            if (saved) {
-                Log.d("PrixodViewModel", "Продукты сохранены во временный файл перед сменой статуса для moveUuid: " + 
-                      currentMoveUuid + ", количество: " + originalProductList.size());
-                      
-
-                logAllTakenValues("ПЕРЕД_СМЕНОЙ_СТАТУСА");
-            } else {
-                Log.e("PrixodViewModel", "КРИТИЧЕСКАЯ ОШИБКА: Не удалось сохранить продукты во временный файл перед сменой статуса!");
-            }
+            productsRepository.saveProducts(currentMoveUuid, originalProductList, new RepositoryCallback<Boolean>() {
+                @Override
+                public void onSuccess(Boolean result) {
+                    Log.d("PrixodViewModel", "Продукты сохранены в Realm перед сменой статуса для moveUuid: " + 
+                          currentMoveUuid + ", количество: " + originalProductList.size());
+                    logAllTakenValues("ПЕРЕД_СМЕНОЙ_СТАТУСА");
+                }
+                
+                @Override
+                public void onError(Exception e) {
+                    Log.e("PrixodViewModel", "КРИТИЧЕСКАЯ ОШИБКА: Не удалось сохранить продукты в Realm перед сменой статуса: " + e.getMessage());
+                }
+            });
         } else {
-            Log.w("PrixodViewModel", "Не удается сохранить продукты во временный файл: отсутствуют необходимые данные");
+            Log.w("PrixodViewModel", "Не удается сохранить продукты в Realm: отсутствуют необходимые данные");
         }
         
         // Теперь формируем JSON
@@ -1666,13 +1717,18 @@ public class ProductsViewModel extends BaseViewModel {
               (productsJson != null ? productsJson.length() : 0));
 
         if (currentMoveUuid != null && !currentMoveUuid.isEmpty() && originalProductList != null) {
-            boolean saved = productsDataManager.saveProductsData(currentMoveUuid, originalProductList);
-            if (saved) {
-                Log.d("PrixodViewModel", "Продукты сохранены в кеш для moveUuid: " + currentMoveUuid + 
-                      ", количество: " + originalProductList.size());
-            } else {
-                Log.e("PrixodViewModel", "Ошибка сохранения продуктов в кеш");
-            }
+            productsRepository.saveProducts(currentMoveUuid, originalProductList, new RepositoryCallback<Boolean>() {
+                @Override
+                public void onSuccess(Boolean result) {
+                    Log.d("PrixodViewModel", "Продукты сохранены в Realm для moveUuid: " + currentMoveUuid + 
+                          ", количество: " + originalProductList.size());
+                }
+                
+                @Override
+                public void onError(Exception e) {
+                    Log.e("PrixodViewModel", "Ошибка сохранения продуктов в Realm: " + e.getMessage());
+                }
+            });
         }
 
         logCurrentStateAsJson("ДО_СОХРАНЕНИЯ");
@@ -1870,10 +1926,19 @@ public class ProductsViewModel extends BaseViewModel {
             
 
             
-            // 4. Сохраняем обновленные продукты в кеш
+            // 4. Сохраняем обновленные продукты в Realm
             if (currentMoveUuid != null && !currentMoveUuid.isEmpty()) {
-                productsDataManager.saveProductsData(currentMoveUuid, originalProductList);
-                Log.d("PrixodViewModel", "Обновленные продукты сохранены в кеш для moveUuid: " + currentMoveUuid);
+                productsRepository.saveProducts(currentMoveUuid, originalProductList, new RepositoryCallback<Boolean>() {
+                    @Override
+                    public void onSuccess(Boolean result) {
+                        Log.d("PrixodViewModel", "Обновленные продукты сохранены в Realm для moveUuid: " + currentMoveUuid);
+                    }
+                    
+                    @Override
+                    public void onError(Exception e) {
+                        Log.e("PrixodViewModel", "Ошибка сохранения обновленных продуктов в Realm: " + e.getMessage());
+                    }
+                });
             }
             return true;
         }
@@ -1889,29 +1954,41 @@ public class ProductsViewModel extends BaseViewModel {
             return;
         }
         
-        Log.d("PrixodViewModel", "Обновляем данные продуктов из кеша для moveUuid: " + currentMoveUuid);
+        Log.d("PrixodViewModel", "Обновляем данные продуктов из Realm для moveUuid: " + currentMoveUuid);
         
-
-        List<Product> cachedProducts = productsDataManager.loadProductsData(currentMoveUuid);
-        if (cachedProducts != null && !cachedProducts.isEmpty()) {
-            // Обновляем оригинальный список
-            originalProductList = new ArrayList<>(cachedProducts);
-            
-
-            Invoice currentInvoice = _currentInvoiceLiveData.getValue();
-            if (currentInvoice != null) {
-                currentInvoice.setProducts(new ArrayList<>(originalProductList));
-                _currentInvoiceLiveData.setValue(currentInvoice);
+        // Загружаем продукты из Realm
+        productsRepository.loadProducts(currentMoveUuid, new RepositoryCallback<List<Product>>() {
+            @Override
+            public void onSuccess(List<Product> cachedProducts) {
+                if (cachedProducts != null && !cachedProducts.isEmpty()) {
+                    // Обновляем оригинальный список
+                    originalProductList = new ArrayList<>(cachedProducts);
+                    
+                    Invoice currentInvoice = _currentInvoiceLiveData.getValue();
+                    if (currentInvoice != null) {
+                        currentInvoice.setProducts(new ArrayList<>(originalProductList));
+                        _currentInvoiceLiveData.setValue(currentInvoice);
+                    }
+                    
+                    _originalProductListUpdatedEvent.setValue(new Event<>(true));
+                    
+                    // Применяем фильтры и сортировку
+                    applyFiltersAndSort();
+                    
+                    Log.d("PrixodViewModel", "Данные продуктов успешно обновлены из Realm. Количество продуктов: " + cachedProducts.size());
+                } else {
+                    Log.w("PrixodViewModel", "Кэш продуктов пуст в Realm");
+                }
             }
             
-
-            _originalProductListUpdatedEvent.setValue(new Event<>(true));
-            
-            // Применяем фильтры и сортировку
-            applyFiltersAndSort();
-            
-            Log.d("PrixodViewModel", "Данные продуктов успешно обновлены из кеша. Количество продуктов: " + cachedProducts.size());
-        } else {
+            @Override
+            public void onError(Exception e) {
+                Log.e("PrixodViewModel", "Ошибка загрузки продуктов из Realm: " + e.getMessage());
+            }
+        });
+        
+        // Удаляем старый else блок, заменяем его на проверку выше
+        if (false) {
             Log.w("PrixodViewModel", "Данные продуктов в кеше не найдены для moveUuid: " + currentMoveUuid);
         }
     }

@@ -245,15 +245,8 @@ public class ProductsActivity extends BaseFullscreenActivity
         
 
 
-        // Очищаем старые файлы (старше 7 дней)
-        long maxAge = 7 * 24 * 60 * 60 * 1000L; // 7 дней в миллисекундах
-
-        
-        // Также очищаем старые файлы с данными продуктов
-        com.step.tcd_rpkb.utils.ProductsDataManager productsDataManager = 
-            new com.step.tcd_rpkb.utils.ProductsDataManager(this);
-        int cleanedProductsFiles = productsDataManager.cleanupOldProductsFiles(maxAge);
-        Log.d("PrixodActivity", "Очищено старых файлов с данными продуктов: " + cleanedProductsFiles);
+        // Realm управляет своей собственной базой данных, cleanup старых файлов больше не требуется
+        // Cleanup неактивных перемещений выполняется в MainApplication при старте приложения
         
         productsViewModel = new ViewModelProvider(this).get(ProductsViewModel.class);
         
@@ -403,29 +396,13 @@ public class ProductsActivity extends BaseFullscreenActivity
                             // Рассчитываем общее количество в документе для данной номенклатуры
                             double totalQuantityInDocument = calculateTotalQuantityForNomenclature(selectedProduct.getNomenclatureUuid());
 
-                            if (moveUuid != null && !moveUuid.isEmpty()) {
-                                // Получаем все продукты из ViewModel
-                                List<Product> allProducts = productsViewModel.getAllProducts();
-                                
-
-                                
-                                // Сохраняем продукты по moveUuid
-                                boolean saved = productsDataManager.saveProductsData(moveUuid, allProducts);
-                                
-                                if (!saved) {
-                                    android.widget.Toast.makeText(ProductsActivity.this, 
-                                        "Ошибка при сохранении данных продуктов", android.widget.Toast.LENGTH_SHORT).show();
-                                    return;
-                                }
-                                
-                                Log.d("PrixodActivity", "Сохранены данные продуктов для перемещения: " + 
-                                      moveUuid + ", количество продуктов: " + allProducts.size());
-                            } else {
-                                Log.e("PrixodActivity", "moveUuid отсутствует, невозможно сохранить данные продуктов");
-                                android.widget.Toast.makeText(ProductsActivity.this, 
+                            if (moveUuid == null || moveUuid.isEmpty()) {
+                                Log.e("PrixodActivity", "moveUuid отсутствует, невозможно открыть выбор серии");
+                                android.widget.Toast.makeText(ProductsActivity.this,
                                     "Ошибка: отсутствует идентификатор перемещения", android.widget.Toast.LENGTH_SHORT).show();
                                 return;
                             }
+                            Log.d("PrixodActivity", "Данные продуктов сохранены в Realm для перемещения: " + moveUuid);
                             
                             // Запускаем Activity для подбора серии
                             Intent intent = new Intent(ProductsActivity.this, SeriesSelectionActivity.class);

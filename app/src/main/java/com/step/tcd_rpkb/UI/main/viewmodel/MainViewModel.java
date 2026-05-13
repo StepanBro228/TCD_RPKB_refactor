@@ -95,6 +95,11 @@ public class MainViewModel extends ViewModel {
             return;
         }
         saveCredentialsUseCase.execute(new Credentials(currentUsername, currentPassword, currentDeviceNum));
+        
+        // Обновляем LiveData сразу после сохранения
+        _username.setValue(currentUsername);
+        _password.setValue(currentPassword);
+        _deviceNum.setValue(currentDeviceNum);
 
         _isLoading.setValue(true);
         _serverStatusText.setValue("Проверка доступности сервера...");
@@ -114,7 +119,7 @@ public class MainViewModel extends ViewModel {
 
     public void handleLoginResult(String username, String password, String deviceNum, boolean onlineMode, String DatabaseURL) {
         Log.d("MainViewModel", "Сохранение настроек: режим=" + (onlineMode ? "онлайн" : "оффлайн") + 
-              ", база=" + DatabaseURL);
+              ", база=" + DatabaseURL + ", номер устройства = " + deviceNum);
         
         saveCredentialsUseCase.execute(new Credentials(username, password, deviceNum));
         setOnlineModeUseCase.execute(onlineMode);
@@ -123,6 +128,7 @@ public class MainViewModel extends ViewModel {
         // Обновляем LiveData, которые слушает диалог (если он еще открыт и слушает)
         _username.setValue(username);
         _password.setValue(password);
+        _deviceNum.setValue(deviceNum);
         _isOnlineMode.setValue(onlineMode);
         _databaseURL.setValue(DatabaseURL);
 

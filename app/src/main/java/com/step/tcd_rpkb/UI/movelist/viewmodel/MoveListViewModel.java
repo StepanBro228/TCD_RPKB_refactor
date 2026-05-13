@@ -23,8 +23,8 @@ import com.step.tcd_rpkb.domain.model.ChangeMoveStatusResult;
 import com.step.tcd_rpkb.utils.DefaultFiltersManager;
 import com.step.tcd_rpkb.utils.DefaultFiltersData;
 import com.step.tcd_rpkb.domain.model.Product;
-import com.step.tcd_rpkb.utils.ProductsDataManager;
-import com.step.tcd_rpkb.utils.SeriesDataManager;
+import com.step.tcd_rpkb.domain.repository.ProductsRepository;
+import com.step.tcd_rpkb.data.datasources.LocalRealmDataSource;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -188,7 +188,8 @@ public class MoveListViewModel extends AndroidViewModel {
     private final ChangeMoveStatusUseCase changeMoveStatusUseCase;
 
     private final DefaultFiltersManager defaultFiltersManager;
-    private final ProductsDataManager productsDataManager;
+    private final ProductsRepository productsRepository;
+    private final LocalRealmDataSource localRealmDataSource;
 
     // LiveData для показа диалога ошибки
     private final MutableLiveData<SingleEvent<ErrorDialogData>> _showErrorDialogEvent = new MutableLiveData<>();
@@ -229,15 +230,16 @@ public class MoveListViewModel extends AndroidViewModel {
 
 
     @Inject
-    public MoveListViewModel(Application application, SavedStateHandle savedStateHandle, MoveRepository moveRepository, GetOnlineModeUseCase getOnlineModeUseCase, GetUserUseCase getUserUseCase, ChangeMoveStatusUseCase changeMoveStatusUseCase, @dagger.hilt.android.qualifiers.ApplicationContext android.content.Context appContext) {
+    public MoveListViewModel(Application application, SavedStateHandle savedStateHandle, MoveRepository moveRepository, GetOnlineModeUseCase getOnlineModeUseCase, GetUserUseCase getUserUseCase, ChangeMoveStatusUseCase changeMoveStatusUseCase, ProductsRepository productsRepository, LocalRealmDataSource localRealmDataSource, @dagger.hilt.android.qualifiers.ApplicationContext android.content.Context appContext) {
         super(application);
         this.savedStateHandle = savedStateHandle;
         this.moveRepository = moveRepository;
         this.getOnlineModeUseCase = getOnlineModeUseCase;
         this.getUserUseCase = getUserUseCase;
         this.changeMoveStatusUseCase = changeMoveStatusUseCase;
+        this.productsRepository = productsRepository;
+        this.localRealmDataSource = localRealmDataSource;
         this.defaultFiltersManager = new DefaultFiltersManager(appContext);
-        this.productsDataManager = new ProductsDataManager(appContext); // Инициализируем ProductsDataManager
         this.executorService = Executors.newSingleThreadExecutor();
 
 
@@ -663,9 +665,8 @@ public class MoveListViewModel extends AndroidViewModel {
                 boolean needDataSync = STATUS_KOMPLEKTUETSA.equals(currentFragmentState) && STATUS_PODGOTOVLEN.equals(targetState);
                 
                 if (needDataSync) {
-                    // Загружаем продукты для сохранения в 1С
-                    List<Product> products = productsDataManager.loadProductsData(guid);
-                    
+                    // Загружаем продукты из Realm для сохранения в 1С
+                    List<Product> products = localRealmDataSource.loadProducts(guid);
 
                     changeMoveStatusUseCase.executeWithDataSave(guid, targetState, userguid, products, new RepositoryCallback<ChangeMoveStatusResult>() {
                     @Override
@@ -1322,10 +1323,9 @@ public class MoveListViewModel extends AndroidViewModel {
             // Сначала проверяем кеш в TempDataManager (временные данные)
             boolean hasTempCache = cachedMovementData.containsKey(moveUuid);
             
-            // Затем проверяем кеш продуктов в ProductsDataManager
-            ProductsDataManager productsDataManager = new ProductsDataManager(getApplication());
-            List<Product> cachedProducts = productsDataManager.loadProductsData(moveUuid);
-            boolean hasProductsCache = !cachedProducts.isEmpty();
+            // Затем проверяем кеш продуктов в Realm через LocalRealmDataSource
+            List<Product> cachedProducts = localRealmDataSource.loadProducts(moveUuid);
+            boolean hasProductsCache = cachedProducts != null && !cachedProducts.isEmpty();
             
             if (hasTempCache || hasProductsCache) {
                 if (hasTempCache) {
@@ -1341,7 +1341,7 @@ public class MoveListViewModel extends AndroidViewModel {
                     _loadCachedDataEvent.setValue(new SingleEvent<>(cachedData));
                     return;
                 } else {
-                    Log.d("MoveListViewModel", "Найдены кэшированные продукты в ProductsDataManager для перемещения " + moveUuid + 
+                    Log.d("MoveListViewModel", "Найдены кэшированные продукты в Realm для перемещения " + moveUuid + 
                           " в статусе 'Комплектуется', количество: " + cachedProducts.size());
                     
 
@@ -1510,8 +1510,8 @@ public class MoveListViewModel extends AndroidViewModel {
         // Показываем индикатор загрузки
         _isLoading.postValue(true);
         
-        // Загружаем данные продуктов для сохранения в 1С
-        List<Product> products = productsDataManager.loadProductsData(moveUuid);
+        // Загружаем данные продуктов из Realm для сохранения в 1С
+        List<Product> products = localRealmDataSource.loadProducts(moveUuid);
         
         // Выполняем сохранение данных в 1С и затем смену статуса
         changeMoveStatusUseCase.executeWithDataSave(moveUuid, STATUS_PODGOTOVLEN, userguid, products, new RepositoryCallback<ChangeMoveStatusResult>() {
@@ -1645,16 +1645,11 @@ public class MoveListViewModel extends AndroidViewModel {
         
 
         
-        //Сначала удаляем данные серий (пока еще есть продукты для определения номенклатур)
-        SeriesDataManager seriesDataManager = new SeriesDataManager(getApplication());
-        seriesDataManager.clearSeriesCacheForMove(moveUuid);
-        
-        // Потом удаляем данные продуктов для данного перемещения
-        ProductsDataManager productsDataManager = new ProductsDataManager(getApplication());
-        boolean productsDeleted = productsDataManager.deleteProductsData(moveUuid);
+        // Удаляем все данные перемещения из Realm (продукты, серии, метаданные)
+        localRealmDataSource.deleteMoveData(moveUuid);
         
         Log.d("MoveListViewModel", "Удаление всех сохраненных данных для перемещения " + moveUuid + 
-              ": кэш очищен, серии очищены, продукты " + (productsDeleted ? "удалены" : "не удалены/не существовали"));
+              " из Realm: кэш очищен, серии и продукты удалены");
     }
 
     /**
@@ -1936,9 +1931,9 @@ public class MoveListViewModel extends AndroidViewModel {
         boolean needDataSync = STATUS_KOMPLEKTUETSA.equals(multiMoveSourceState) && STATUS_PODGOTOVLEN.equals(multiMoveTargetState);
         
         if (needDataSync) {
-            // Загружаем данные продуктов для сохранения в 1С
-            List<Product> products = productsDataManager.loadProductsData(guid);
-            
+            // Загружаем данные продуктов из Realm для сохранения в 1С
+            List<Product> products = localRealmDataSource.loadProducts(guid);
+
             changeMoveStatusUseCase.executeWithDataSave(guid, multiMoveTargetState, userguid, products, new RepositoryCallback<ChangeMoveStatusResult>() {
             @Override
             public void onSuccess(ChangeMoveStatusResult resultObj) {

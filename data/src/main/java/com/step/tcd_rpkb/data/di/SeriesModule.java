@@ -3,6 +3,7 @@ package com.step.tcd_rpkb.data.di;
 import android.content.Context;
 
 import com.google.gson.Gson;
+import com.step.tcd_rpkb.data.datasources.LocalRealmDataSource;
 import com.step.tcd_rpkb.data.datasources.RemoteSeriesDataSource;
 import com.step.tcd_rpkb.data.network.MoveApiService;
 import com.step.tcd_rpkb.data.repository.SeriesRepositoryImpl;
@@ -38,13 +39,15 @@ public class SeriesModule {
             Gson gson,
             UserSettingsRepository userSettingsRepository,
             ConnectivityChecker connectivityChecker,
-            RemoteSeriesDataSource remoteSeriesDataSource) {
+            RemoteSeriesDataSource remoteSeriesDataSource,
+            LocalRealmDataSource localRealmDataSource) {
         return new SeriesRepositoryImpl(
                 context, 
                 gson, 
                 userSettingsRepository, 
                 connectivityChecker, 
-                remoteSeriesDataSource
+                remoteSeriesDataSource,
+                localRealmDataSource
         );
     }
 } 

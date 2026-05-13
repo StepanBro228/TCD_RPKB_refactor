@@ -131,23 +131,23 @@ public class AuthRepositoryImpl implements AuthRepository {
                 
                 // Обрабатываем DTO если получен
                 if (dto != null) {
-                    if (dto.hasError()) {
-                        String errorMessage = dto.getError();
-                        Log.w(TAG, "Сервер вернул ошибку: " + errorMessage);
-                        callback.onSuccess(new AuthenticationResult("Пользователь не найден"));
-                        return;
-                    }
+//                    if (dto.hasError()) {
+//                        String errorMessage = dto.getError();
+//                        Log.w(TAG, "Сервер вернул ошибку: " + errorMessage);
+//                        callback.onSuccess(new AuthenticationResult("Пользователь не найден"));
+//                        return;
+//                    }
                     
                     // Проверяем поле "Результат"
-                    if (!dto.isResult()) {
-                        String errorText = dto.getErrorText();
-                        if (errorText == null || errorText.trim().isEmpty()) {
-                            errorText = "Неверный логин";
-                        }
-                        Log.w(TAG, "Логин не найден или ошибка: " + errorText);
-                        callback.onSuccess(new AuthenticationResult(errorText));
-                        return;
-                    }
+//                    if (!dto.isResult()) {
+//                        String errorText = dto.getErrorText();
+//                        if (errorText == null || errorText.trim().isEmpty()) {
+//                            errorText = "Неверный логин";
+//                        }
+//                        Log.w(TAG, "Логин не найден или ошибка: " + errorText);
+//                        callback.onSuccess(new AuthenticationResult(errorText));
+//                        return;
+//                    }
                     
                     // Проверяем, что получены обязательные данные пользователя
                     if (dto.getName() == null || dto.getName().trim().isEmpty()) {
@@ -219,33 +219,33 @@ public class AuthRepositoryImpl implements AuthRepository {
                 
                 // Обрабатываем DTO если получен
                 if (dto != null) {
-                    if (dto.hasError()) {
-                        String errorMessage = dto.getError();
-                        Log.w(TAG, "Сервер вернул ошибку при проверке пароля: " + errorMessage);
-                        
-
-                        userAuthInterceptor.clearCredentials();
-                        userSettingsRepository.saveCredentials(new Credentials("", "", ""));
-                        
-                        callback.onSuccess(new AuthenticationResult("Неверный пароль"));
-                        return;
-                    }
+//                    if (dto.hasError()) {
+//                        String errorMessage = dto.getError();
+//                        Log.w(TAG, "Сервер вернул ошибку при проверке пароля: " + errorMessage);
+//
+//
+//                        userAuthInterceptor.clearCredentials();
+//                        userSettingsRepository.saveCredentials(new Credentials("", "", ""));
+//
+//                        callback.onSuccess(new AuthenticationResult("Неверный пароль"));
+//                        return;
+//                    }
                     
 
-                    if (!dto.isResult()) {
-                        String errorText = dto.getErrorText();
-                        if (errorText == null || errorText.trim().isEmpty()) {
-                            errorText = "Неверный пароль";
-                        }
-                        
-                        // Пароль неверный - очищаем данные
-                        userAuthInterceptor.clearCredentials();
-                        userSettingsRepository.saveCredentials(new Credentials("", "", ""));
-                        
-                        Log.w(TAG, "Неверный пароль или ошибка (время: " + duration + " мс): " + errorText);
-                        callback.onSuccess(new AuthenticationResult(errorText));
-                        return;
-                    }
+//                    if (!dto.isResult()) {
+//                        String errorText = dto.getErrorText();
+//                        if (errorText == null || errorText.trim().isEmpty()) {
+//                            errorText = "Неверный пароль";
+//                        }
+//
+//                        // Пароль неверный - очищаем данные
+//                        userAuthInterceptor.clearCredentials();
+//                        userSettingsRepository.saveCredentials(new Credentials("", "", ""));
+//
+//                        Log.w(TAG, "Неверный пароль или ошибка (время: " + duration + " мс): " + errorText);
+//                        callback.onSuccess(new AuthenticationResult(errorText));
+//                        return;
+//                    }
                     
                     // Пароль верный - успешная авторизация
                     Log.d(TAG, "Успешная авторизация пользователя (время: " + duration + " мс)");
@@ -291,24 +291,24 @@ public class AuthRepositoryImpl implements AuthRepository {
      * Обрабатывает DTO ответа получения информации о пользователе
      */
     private void processUserInfoResponseDto(UserInfoResponseDto dto, RepositoryCallback<UserInfoResponse> callback) {
-        if (dto.hasError()) {
-            String errorMessage = dto.getError();
-            Log.e(TAG, "getUserInfoByGuid: Сервер вернул ошибку: " + errorMessage);
-            callback.onError(new com.step.tcd_rpkb.data.exceptions.ServerErrorWithTypeException("Пользователь с указанным QR-кодом не найден", com.step.tcd_rpkb.data.exceptions.ServerErrorWithTypeException.ErrorType.USER_INFO));
-            return;
-        }
-        
-        // Проверяем поле "Результат"
-        if (!dto.isResult()) {
-
-            String errorText = dto.getErrorText();
-            if (errorText == null || errorText.trim().isEmpty()) {
-                errorText = "Пользователь с указанным GUID не найден";
-            }
-            Log.e(TAG, "getUserInfoByGuid: Результат false, ТекстОшибки: " + errorText);
-            callback.onError(new com.step.tcd_rpkb.data.exceptions.ServerErrorWithTypeException(errorText, com.step.tcd_rpkb.data.exceptions.ServerErrorWithTypeException.ErrorType.USER_INFO));
-            return;
-        }
+//        if (dto.hasError()) {
+//            String errorMessage = dto.getError();
+//            Log.e(TAG, "getUserInfoByGuid: Сервер вернул ошибку: " + errorMessage);
+//            callback.onError(new com.step.tcd_rpkb.data.exceptions.ServerErrorWithTypeException("Пользователь с указанным QR-кодом не найден", com.step.tcd_rpkb.data.exceptions.ServerErrorWithTypeException.ErrorType.USER_INFO));
+//            return;
+//        }
+//
+//        // Проверяем поле "Результат"
+//        if (!dto.isResult()) {
+//
+//            String errorText = dto.getErrorText();
+//            if (errorText == null || errorText.trim().isEmpty()) {
+//                errorText = "Пользователь с указанным GUID не найден";
+//            }
+//            Log.e(TAG, "getUserInfoByGuid: Результат false, ТекстОшибки: " + errorText);
+//            callback.onError(new com.step.tcd_rpkb.data.exceptions.ServerErrorWithTypeException(errorText, com.step.tcd_rpkb.data.exceptions.ServerErrorWithTypeException.ErrorType.USER_INFO));
+//            return;
+//        }
         
 
         try {

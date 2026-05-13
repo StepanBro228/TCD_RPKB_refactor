@@ -51,11 +51,7 @@ public class AuthModule {
         return new UserAuthInterceptor();
     }
     
-    @Provides
-    @Singleton
-    public DeviceNumInterceptor provideDeviceNumInterceptor(UserSettingsRepository userSettingsRepository) {
-        return new DeviceNumInterceptor(userSettingsRepository);
-    }
+
     
     // Создаем TrustManager, который игнорирует проверку сертификатов
     private X509TrustManager createInsecureTrustManager() {

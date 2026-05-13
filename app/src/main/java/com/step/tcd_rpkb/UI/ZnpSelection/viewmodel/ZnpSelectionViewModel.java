@@ -8,8 +8,8 @@ import androidx.lifecycle.MutableLiveData;
 import com.step.tcd_rpkb.base.BaseViewModel;
 import com.step.tcd_rpkb.domain.model.SeriesChangeItem;
 import com.step.tcd_rpkb.utils.Event;
+import com.step.tcd_rpkb.data.datasources.LocalRealmDataSource;
 import com.step.tcd_rpkb.domain.model.Product;
-import com.step.tcd_rpkb.utils.ProductsDataManager;
 import com.step.tcd_rpkb.utils.SeriesDataManager;
 import com.step.tcd_rpkb.utils.UuidGenerator;
 
@@ -74,7 +74,10 @@ public class ZnpSelectionViewModel extends BaseViewModel {
     
     // Менеджеры данных
     private final SeriesDataManager seriesDataManager;
-    private final ProductsDataManager productsDataManager;
+    private final LocalRealmDataSource localRealmDataSource;
+    
+    // In-memory список продуктов на время текущей сессии замены серии
+    private List<Product> inMemoryProducts = null;
     
     // Сохраняем оригинальные значения свободных остатков для отката
     private Map<String, Double> originalFreeBalances = new HashMap<>();
@@ -96,9 +99,9 @@ public class ZnpSelectionViewModel extends BaseViewModel {
     }
     
     @Inject
-    public ZnpSelectionViewModel(SeriesDataManager seriesDataManager, ProductsDataManager productsDataManager) {
+    public ZnpSelectionViewModel(SeriesDataManager seriesDataManager, LocalRealmDataSource localRealmDataSource) {
         this.seriesDataManager = seriesDataManager;
-        this.productsDataManager = productsDataManager;
+        this.localRealmDataSource = localRealmDataSource;
     }
     
     /**
@@ -116,8 +119,9 @@ public class ZnpSelectionViewModel extends BaseViewModel {
         
         _isLoading.setValue(true);
         
-        // Загружаем данные продуктов из файла по moveUuid
-        List<Product> products = productsDataManager.loadProductsData(moveUuid);
+        // Загружаем данные продуктов из Realm и инициализируем in-memory список
+        inMemoryProducts = localRealmDataSource.loadProducts(moveUuid);
+        List<Product> products = inMemoryProducts;
         
         if (products.isEmpty()) {
             _isLoading.setValue(false);
@@ -213,10 +217,9 @@ public class ZnpSelectionViewModel extends BaseViewModel {
         targetSeriesFreeBalance = getCurrentFreeBalance();
 
         if (currentMoveUuid != null && currentNomenclatureUuid != null) {
-            Log.d(TAG, "Перезагружаем продукты из кеша после замены серии");
-            
+            Log.d(TAG, "Обновляем список из in-memory продуктов после замены серии");
 
-            List<Product> updatedProducts = productsDataManager.loadProductsData(currentMoveUuid);
+            List<Product> updatedProducts = inMemoryProducts != null ? inMemoryProducts : new ArrayList<>();
             
             // Фильтруем и преобразуем в SeriesChangeItem
             List<SeriesChangeItem> updatedSeriesChangeItems = new ArrayList<>();
@@ -492,75 +495,45 @@ public class ZnpSelectionViewModel extends BaseViewModel {
     /**
      * Сохраняет обновленные и новые продукты в кеш
      */
+    /**
+     * Обновляет in-memory список продуктов (БЕЗ записи в Realm).
+     * Realm обновляется только когда родительский экран применяет SeriesChangeResult.
+     */
     private void saveUpdatedProducts(List<Product> updatedProducts, List<Product> newProducts) {
         if (currentMoveUuid == null) {
-            Log.e(TAG, "currentMoveUuid is null, невозможно сохранить продукты");
+            Log.e(TAG, "currentMoveUuid is null, невозможно обновить продукты");
             return;
         }
-        
+
         try {
-            // Загружаем текущие продукты по moveUuid
-            List<Product> allProducts = productsDataManager.loadProductsData(currentMoveUuid);
-            
-            Log.d(TAG, "=== НАЧАЛО СОХРАНЕНИЯ ОБНОВЛЕННЫХ ПРОДУКТОВ ===");
-            Log.d(TAG, "MoveUUID: " + currentMoveUuid);
-            Log.d(TAG, "Загружено существующих продуктов: " + allProducts.size());
-            Log.d(TAG, "Обновленных продуктов: " + updatedProducts.size());
-            Log.d(TAG, "Новых продуктов: " + newProducts.size());
-            
-            // Логируем
-            for (int i = 0; i < updatedProducts.size(); i++) {
-                Product product = updatedProducts.get(i);
-                Log.d(TAG, "Обновляемый продукт #" + (i + 1) + ": " +
-                          "ID=" + product.getProductLineId() +
-                          ", parentID=" + product.getParentProductLineId() +
-                          ", nomenclature=" + product.getNomenclatureName() +
-                          ", series=" + product.getSeriesName() +
-                          ", quantity=" + product.getQuantity() +
-                          ", exists=" + product.getExists());
+            if (inMemoryProducts == null) {
+                inMemoryProducts = localRealmDataSource.loadProducts(currentMoveUuid);
             }
-            
-            // Логируем
-            for (int i = 0; i < newProducts.size(); i++) {
-                Product product = newProducts.get(i);
-                Log.d(TAG, "Новый продукт #" + (i + 1) + ": " +
-                          "ID=" + product.getProductLineId() +
-                          ", parentID=" + product.getParentProductLineId() +
-                          ", nomenclature=" + product.getNomenclatureName() +
-                          ", series=" + product.getSeriesName() +
-                          ", quantity=" + product.getQuantity() +
-                          ", exists=" + product.getExists());
-            }
-            
-            // Обновляем продукты
+            List<Product> allProducts = new ArrayList<>(inMemoryProducts);
+
+            Log.d(TAG, "=== ОБНОВЛЕНИЕ IN-MEMORY ПРОДУКТОВ ===");
+            Log.d(TAG, "MoveUUID: " + currentMoveUuid + ", существующих: " + allProducts.size() +
+                       ", обновленных: " + updatedProducts.size() + ", новых: " + newProducts.size());
+
             for (Product updatedProduct : updatedProducts) {
                 for (int i = 0; i < allProducts.size(); i++) {
                     if (java.util.Objects.equals(allProducts.get(i).getProductLineId(), updatedProduct.getProductLineId())) {
-                        Log.d(TAG, "Заменяем продукт с ID: " + updatedProduct.getProductLineId());
                         allProducts.set(i, updatedProduct);
                         break;
                     }
                 }
             }
-            
-            // Добавляем новые продукты
+
             allProducts.addAll(newProducts);
-            Log.d(TAG, "Общее количество продуктов после добавления: " + allProducts.size());
-            
-            // Слияние продуктов с одинаковыми полями
             mergeIdenticalProducts(allProducts);
-            Log.d(TAG, "Количество продуктов после слияния: " + allProducts.size());
-            
-            // Сохраняем обновленный список по moveUuid
-            productsDataManager.saveProductsData(currentMoveUuid, allProducts);
-            
-            Log.d(TAG, "Продукты сохранены в кеш для moveUuid: " + currentMoveUuid + 
-                       ". Обновлено: " + updatedProducts.size() + 
-                       ", добавлено новых: " + newProducts.size());
-            Log.d(TAG, "=== КОНЕЦ СОХРАНЕНИЯ ОБНОВЛЕННЫХ ПРОДУКТОВ ===");
-            
+
+            inMemoryProducts = allProducts;
+
+            Log.d(TAG, "In-memory продукты обновлены: " + inMemoryProducts.size() + " продуктов");
+            Log.d(TAG, "=== КОНЕЦ ОБНОВЛЕНИЯ IN-MEMORY ПРОДУКТОВ ===");
+
         } catch (Exception e) {
-            Log.e(TAG, "Ошибка сохранения продуктов: " + e.getMessage(), e);
+            Log.e(TAG, "Ошибка обновления in-memory продуктов: " + e.getMessage(), e);
         }
     }
 
@@ -643,7 +616,9 @@ public class ZnpSelectionViewModel extends BaseViewModel {
             }
             
             // Определяем исходную серию из первого продукта данной номенклатуры
-            List<Product> products = productsDataManager.loadProductsData(currentMoveUuid);
+            List<Product> products = inMemoryProducts != null
+                    ? inMemoryProducts
+                    : localRealmDataSource.loadProducts(currentMoveUuid);
             for (Product product : products) {
                 if (currentNomenclatureUuid.equals(product.getNomenclatureUuid()) && product.getSeriesUuid() != null) {
                     String seriesUuid = product.getSeriesUuid();

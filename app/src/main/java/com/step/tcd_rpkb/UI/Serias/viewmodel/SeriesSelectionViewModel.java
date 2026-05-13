@@ -11,9 +11,9 @@ import com.step.tcd_rpkb.domain.repository.RepositoryCallback;
 import com.step.tcd_rpkb.domain.usecase.GetSeriesForNomenclatureUseCase;
 import com.step.tcd_rpkb.domain.usecase.SaveSeriesAllocationUseCase;
 import com.step.tcd_rpkb.utils.Event;
-import com.step.tcd_rpkb.utils.SeriesDataManager;
-import com.step.tcd_rpkb.utils.ProductsDataManager;
+import com.step.tcd_rpkb.data.datasources.LocalRealmDataSource;
 import com.step.tcd_rpkb.domain.model.Product;
+import com.step.tcd_rpkb.utils.SeriesDataManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,7 +35,7 @@ public class SeriesSelectionViewModel extends BaseViewModel {
     private final GetSeriesForNomenclatureUseCase getSeriesForNomenclatureUseCase;
     private final SaveSeriesAllocationUseCase saveSeriesAllocationUseCase;
     private final SeriesDataManager seriesDataManager;
-    private final ProductsDataManager productsDataManager;
+    private final LocalRealmDataSource localRealmDataSource;
 
     // LiveData для хранения списка серий
     private final MutableLiveData<List<SeriesItem>> _seriesItems = new MutableLiveData<>();
@@ -91,11 +91,11 @@ public class SeriesSelectionViewModel extends BaseViewModel {
             GetSeriesForNomenclatureUseCase getSeriesForNomenclatureUseCase,
             SaveSeriesAllocationUseCase saveSeriesAllocationUseCase,
             SeriesDataManager seriesDataManager,
-            ProductsDataManager productsDataManager) {
+            LocalRealmDataSource localRealmDataSource) {
         this.getSeriesForNomenclatureUseCase = getSeriesForNomenclatureUseCase;
         this.saveSeriesAllocationUseCase = saveSeriesAllocationUseCase;
         this.seriesDataManager = seriesDataManager;
-        this.productsDataManager = productsDataManager;
+        this.localRealmDataSource = localRealmDataSource;
     }
 
     /**
@@ -267,8 +267,8 @@ public class SeriesSelectionViewModel extends BaseViewModel {
         Log.d(TAG, "НАЧАЛО пересчета количества в документе для серий номенклатуры: " + nomenclatureUuid);
         Log.d(TAG, "Количество серий для пересчета: " + seriesList.size());
         
-        // Загружаем продукты из кеша по moveUuid
-        List<Product> products = productsDataManager.loadProductsData(currentMoveUuid);
+        // Загружаем продукты из Realm по moveUuid
+        List<Product> products = localRealmDataSource.loadProducts(currentMoveUuid);
         if (products.isEmpty()) {
             Log.w(TAG, "Нет продуктов для пересчета количества в документе (moveUuid: " + currentMoveUuid + ")");
             return;

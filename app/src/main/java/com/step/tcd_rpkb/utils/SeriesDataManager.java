@@ -6,8 +6,9 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import com.step.tcd_rpkb.domain.model.SeriesItem;
+import com.step.tcd_rpkb.data.datasources.LocalRealmDataSource;
 import com.step.tcd_rpkb.domain.model.Product;
+import com.step.tcd_rpkb.domain.model.SeriesItem;
 
 import java.io.File;
 import java.io.FileReader;
@@ -34,12 +35,14 @@ public class SeriesDataManager {
     private final Context context;
     private final Gson gson;
     private final File seriesDir;
+    private final LocalRealmDataSource localRealmDataSource;
     
     // Кеш в памяти для быстрого доступа
     private final Map<String, List<SeriesItem>> memoryCache = new HashMap<>();
     
-    public SeriesDataManager(Context context) {
+    public SeriesDataManager(Context context, LocalRealmDataSource localRealmDataSource) {
         this.context = context;
+        this.localRealmDataSource = localRealmDataSource;
         this.gson = new GsonBuilder()
                 .disableHtmlEscaping() // Отключаем HTML экранирование для корректной работы с кириллицей
                 .setPrettyPrinting()
@@ -262,9 +265,8 @@ public class SeriesDataManager {
             return;
         }
         
-        // Загружаем продукты данного перемещения чтобы узнать какие номенклатуры были использованы
-        ProductsDataManager productsDataManager = new ProductsDataManager(context);
-        List<Product> products = productsDataManager.loadProductsData(moveUuid);
+        // Загружаем продукты данного перемещения из Realm чтобы узнать какие номенклатуры были использованы
+        List<Product> products = localRealmDataSource.loadProducts(moveUuid);
         
         // Собираем уникальные UUID номенклатур из продуктов
         Set<String> nomenclatureUuids = new HashSet<>();

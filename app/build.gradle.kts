@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.hilt)
+    id("realm-android")
 }
 
 android {
@@ -46,6 +47,8 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.mediarouter)
     implementation("androidx.viewpager2:viewpager2:1.0.0")
+    // Realm
+    implementation("io.realm:realm-android-library:10.18.0")
 
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

@@ -231,6 +231,8 @@ public class LoginDialogFragment extends DialogFragment {
                 Log.d("LoginDialogFragment", "  - Режим: " + (onlineMode ? "онлайн" : "оффлайн"));
                 Log.d("LoginDialogFragment", "  - База данных: " + DataBaseURL);
                 Log.d("LoginDialogFragment", "  - Пользователь: " + username);
+                Log.d("LoginDialogFragment", "  - Номер устройства: " + deviceNum);
+
                 
                 hideKeyboard();
                 

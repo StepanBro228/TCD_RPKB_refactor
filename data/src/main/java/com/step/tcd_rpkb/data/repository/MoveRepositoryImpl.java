@@ -5,6 +5,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.step.tcd_rpkb.data.datasources.DataSourceCallback;
 import com.step.tcd_rpkb.data.datasources.LocalMoveDataSource;
+import com.step.tcd_rpkb.data.datasources.LocalRealmDataSource;
 import com.step.tcd_rpkb.data.datasources.RemoteMoveDataSource;
 import com.step.tcd_rpkb.data.mapper.SaveMoveDataMapper;
 import com.step.tcd_rpkb.data.network.MoveApiService;
@@ -40,6 +41,7 @@ public class MoveRepositoryImpl implements MoveRepository {
     private static final String TAG = "MoveRepositoryImpl";
 
     private final LocalMoveDataSource localDataSource;
+    private final LocalRealmDataSource localRealmDataSource;
     private final RemoteMoveDataSource remoteDataSource;
     private final UserSettingsRepository userSettingsRepository;
     private final Context appContext;
@@ -50,6 +52,7 @@ public class MoveRepositoryImpl implements MoveRepository {
 
     @Inject
     public MoveRepositoryImpl(LocalMoveDataSource localDataSource,
+                              LocalRealmDataSource localRealmDataSource,
                               RemoteMoveDataSource remoteDataSource,
                               UserSettingsRepository userSettingsRepository,
                               @ApplicationContext Context appContext,
@@ -58,6 +61,7 @@ public class MoveRepositoryImpl implements MoveRepository {
                               SaveMoveDataMapper saveMoveDataMapper,
                               Gson gson) {
         this.localDataSource = localDataSource;
+        this.localRealmDataSource = localRealmDataSource;
         this.remoteDataSource = remoteDataSource;
         this.userSettingsRepository = userSettingsRepository;
         this.appContext = appContext;
@@ -117,6 +121,11 @@ public class MoveRepositoryImpl implements MoveRepository {
             remoteDataSource.getDocumentMove(guid, new DataSourceCallback<Invoice>() {
                 @Override
                 public void onSuccess(Invoice data) {
+                    // Сохраняем загруженные продукты в Realm
+                    if (data != null && data.getProducts() != null && !data.getProducts().isEmpty()) {
+                        localRealmDataSource.saveProducts(guid, data.getProducts());
+                        Log.d(TAG, "Продукты сохранены в Realm для перемещения: " + guid);
+                    }
                     callback.onSuccess(data);
                 }
 
@@ -129,6 +138,17 @@ public class MoveRepositoryImpl implements MoveRepository {
         } else {
             System.out.println("MoveRepositoryImpl: Оффлайн/нет сети, загрузка getDocumentMove из локального источника.");
             try {
+                // Сначала пытаемся загрузить из Realm
+                List<Product> cachedProducts = localRealmDataSource.loadProducts(guid);
+                
+                if (cachedProducts != null && !cachedProducts.isEmpty()) {
+                    Log.d(TAG, "Загружены продукты из Realm кеша: " + cachedProducts.size());
+                    Invoice cachedInvoice = new Invoice(guid, cachedProducts);
+                    callback.onSuccess(cachedInvoice);
+                    return;
+                }
+                
+                // Если в Realm нет - загружаем из локальных JSON
                 callback.onSuccess(localDataSource.getDocumentMove(guid));
             } catch (Exception e) {
                 callback.onError(e);
@@ -288,6 +308,11 @@ public class MoveRepositoryImpl implements MoveRepository {
                 public void onResponse(Call<Void> call, Response<Void> response) {
                     if (response.isSuccessful()) {
                         Log.d(TAG, "Данные перемещения успешно сохранены в 1С для moveGuid: " + moveGuid);
+                        
+                        // Очищаем данные из Realm после успешной синхронизации с 1С
+                        localRealmDataSource.deleteMoveData(moveGuid);
+                        Log.d(TAG, "Данные перемещения очищены из Realm после синхронизации с 1С");
+                        
                         callback.onSuccess(true);
                     } else {
 

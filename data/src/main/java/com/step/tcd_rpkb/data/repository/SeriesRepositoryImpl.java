@@ -8,6 +8,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.step.tcd_rpkb.data.datasources.DataSourceCallback;
+import com.step.tcd_rpkb.data.datasources.LocalRealmDataSource;
 import com.step.tcd_rpkb.data.datasources.RemoteSeriesDataSource;
 import com.step.tcd_rpkb.data.mapper.ProductSeriesMapper;
 import com.step.tcd_rpkb.data.network.dto.ProductSeriesDto;
@@ -41,18 +42,21 @@ public class SeriesRepositoryImpl implements SeriesRepository {
     private final UserSettingsRepository userSettingsRepository;
     private final ConnectivityChecker connectivityChecker;
     private final RemoteSeriesDataSource remoteSeriesDataSource;
+    private final LocalRealmDataSource localRealmDataSource;
     
     @Inject
     public SeriesRepositoryImpl(@ApplicationContext Context context, 
                                Gson gson,
                                UserSettingsRepository userSettingsRepository,
                                ConnectivityChecker connectivityChecker,
-                               RemoteSeriesDataSource remoteSeriesDataSource) {
+                               RemoteSeriesDataSource remoteSeriesDataSource,
+                               LocalRealmDataSource localRealmDataSource) {
         this.context = context;
         this.gson = gson;
         this.userSettingsRepository = userSettingsRepository;
         this.connectivityChecker = connectivityChecker;
         this.remoteSeriesDataSource = remoteSeriesDataSource;
+        this.localRealmDataSource = localRealmDataSource;
     }
 
     @Override
@@ -77,6 +81,13 @@ public class SeriesRepositoryImpl implements SeriesRepository {
                 @Override
                 public void onSuccess(List<SeriesItem> data) {
                     Log.d(TAG, "Успешно получены серии из API: " + data.size() + " элементов");
+                    
+                    // Сохраняем серии в Realm для кэширования
+                    if (data != null && !data.isEmpty() && nomenclatureUuid != null && moveUuid != null) {
+                        localRealmDataSource.saveSeries(moveUuid, nomenclatureUuid, data);
+                        Log.d(TAG, "Серии сохранены в Realm для кэширования");
+                    }
+                    
                     callback.onSuccess(data);
                 }
 
@@ -95,7 +106,7 @@ public class SeriesRepositoryImpl implements SeriesRepository {
     }
 
     /**
-     * Загружает данные серий из локального JSON файла
+     * Загружает данные серий из Realm или локального JSON файла
      */
     private void loadOfflineSeriesData(String nomenclatureUuid, String moveUuid, String productLineId, RepositoryCallback<List<SeriesItem>> callback) {
         Log.d(TAG, "Загрузка оффлайн данных для nomenclatureUuid=" + nomenclatureUuid + ", moveUuid=" + moveUuid);
@@ -105,6 +116,16 @@ public class SeriesRepositoryImpl implements SeriesRepository {
             try {
                 Thread.sleep(500);
                 
+                // Сначала пытаемся загрузить из Realm кэша
+                List<SeriesItem> cachedSeries = localRealmDataSource.loadSeries(moveUuid, nomenclatureUuid);
+                
+                if (cachedSeries != null && !cachedSeries.isEmpty()) {
+                    Log.d(TAG, "Загружены серии из Realm кэша: " + cachedSeries.size() + " элементов");
+                    invokeCallbackOnMainThread(callback, cachedSeries, null);
+                    return;
+                }
+                
+                Log.d(TAG, "В Realm кэше нет серий, загружаем из assets");
 
                 String jsonString = loadJSONFromAsset("series_data.json");
                 if (jsonString == null) {
@@ -158,25 +179,20 @@ public class SeriesRepositoryImpl implements SeriesRepository {
     }
     
     /**
-     * Заглушка для сохранения распределения серий в оффлайн режиме
+     * Сохраняет распределение серий в Realm
      */
     private void saveOfflineSeriesAllocation(String nomenclatureUuid, String moveUuid, List<SeriesItem> seriesItems, RepositoryCallback<Boolean> callback) {
         new Thread(() -> {
             try {
-                Thread.sleep(1500);
+                Thread.sleep(300);
                 
-                Log.d(TAG, "=== СОХРАНЕНИЕ РАСПРЕДЕЛЕНИЯ СЕРИЙ ===");
+                Log.d(TAG, "=== СОХРАНЕНИЕ РАСПРЕДЕЛЕНИЯ СЕРИЙ В REALM ===");
                 Log.d(TAG, "nomenclatureUuid: " + nomenclatureUuid);
                 Log.d(TAG, "moveUuid: " + moveUuid);
                 Log.d(TAG, "Количество серий: " + seriesItems.size());
                 
-                // Создаем JSON представление данных для отправки
-                com.google.gson.Gson gson = new com.google.gson.GsonBuilder()
-                        .disableHtmlEscaping()
-                        .create();
-                String seriesJson = gson.toJson(seriesItems);
-                
-                Log.d(TAG, "Размер JSON: " + seriesJson.length() + " символов");
+                // Сохраняем серии в Realm
+                localRealmDataSource.saveSeries(moveUuid, nomenclatureUuid, seriesItems);
                 
                 // Логируем детальную информацию о каждой серии
                 for (int i = 0; i < seriesItems.size(); i++) {
@@ -191,15 +207,7 @@ public class SeriesRepositoryImpl implements SeriesRepository {
                               ", максимально доступно=" + item.getMaxAllowedAllocation());
                 }
                 
-                // Логируем полный JSON
-                if (seriesJson.length() < 3000) {
-                    Log.d(TAG, "Полный JSON для сохранения серий: " + seriesJson);
-                } else {
-                    Log.d(TAG, "JSON серий (первые 1000 символов): " + seriesJson.substring(0, 1000) + "...");
-                    Log.d(TAG, "JSON серий (последние 500 символов): ..." + seriesJson.substring(seriesJson.length() - 500));
-                }
-                
-                Log.d(TAG, "Имитация успешного сохранения распределения серий");
+                Log.d(TAG, "Серии успешно сохранены в Realm");
                 Log.d(TAG, "=== КОНЕЦ СОХРАНЕНИЯ РАСПРЕДЕЛЕНИЯ СЕРИЙ ===");
                 
                 // Возвращаем успех
@@ -207,6 +215,9 @@ public class SeriesRepositoryImpl implements SeriesRepository {
             } catch (InterruptedException e) {
                 Log.e(TAG, "Операция сохранения серий прервана", e);
                 invokeCallbackOnMainThread(callback, false, new Exception("Операция прервана"));
+            } catch (Exception e) {
+                Log.e(TAG, "Ошибка сохранения серий в Realm: " + e.getMessage(), e);
+                invokeCallbackOnMainThread(callback, false, e);
             }
         }).start();
     }

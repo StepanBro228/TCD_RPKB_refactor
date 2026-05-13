@@ -29,8 +29,8 @@ import com.step.tcd_rpkb.data.network.ConnectionRetryInterceptor; // <-- Имп�
 import com.step.tcd_rpkb.data.network.BasicAuthInterceptor; // <-- Импорт интерсептора авторизации
 import com.step.tcd_rpkb.data.network.DeviceNumInterceptor; // <-- Импорт интерсептора номера устройства
 import com.step.tcd_rpkb.data.network.FullBodyLoggingInterceptor; // <-- Импорт полного логгера
-import com.step.tcd_rpkb.utils.SeriesDataManager; // <-- Импорт менеджера данных серий
-import com.step.tcd_rpkb.utils.ProductsDataManager; // <-- Импорт менеджера данных продуктов
+import com.step.tcd_rpkb.data.datasources.LocalRealmDataSource;
+import com.step.tcd_rpkb.utils.SeriesDataManager;
 import dagger.Module;
 import dagger.Provides;
 import dagger.hilt.InstallIn;
@@ -148,13 +148,12 @@ public class AppModule {
     public BasicAuthInterceptor provideBasicAuthInterceptor(UserSettingsRepository userSettingsRepository) {
         return new BasicAuthInterceptor(userSettingsRepository);
     }
-    
+
     @Provides
     @Singleton
     public DeviceNumInterceptor provideDeviceNumInterceptor(UserSettingsRepository userSettingsRepository) {
         return new DeviceNumInterceptor(userSettingsRepository);
     }
-    
 
 
     // Создаем TrustManager, который игнорирует проверку сертификатов
@@ -243,16 +242,9 @@ public class AppModule {
     @Provides
     @Singleton
     public SeriesDataManager provideSeriesDataManager(
-            @ApplicationContext Context appContext
+            @ApplicationContext Context appContext,
+            LocalRealmDataSource localRealmDataSource
     ) {
-        return new SeriesDataManager(appContext);
-    }
-
-    @Provides
-    @Singleton
-    public ProductsDataManager provideProductsDataManager(
-            @ApplicationContext Context appContext
-    ) {
-        return new ProductsDataManager(appContext);
+        return new SeriesDataManager(appContext, localRealmDataSource);
     }
 } 

@@ -1,18 +1,19 @@
 package com.step.tcd_rpkb.domain.usecase;
 
 import com.step.tcd_rpkb.domain.model.Invoice;
-import com.step.tcd_rpkb.domain.repository.PrixodRepository;
+
+import com.step.tcd_rpkb.domain.repository.ProductsRepository;
 import com.step.tcd_rpkb.domain.repository.RepositoryCallback;
 
 import javax.inject.Inject;
 
 public class GetPrixodDocumentUseCase {
 
-    private final PrixodRepository prixodRepository;
+    private final ProductsRepository productsRepository;
 
     @Inject
-    public GetPrixodDocumentUseCase(PrixodRepository prixodRepository) {
-        this.prixodRepository = prixodRepository;
+    public GetPrixodDocumentUseCase(ProductsRepository productsRepository) {
+        this.productsRepository = productsRepository;
     }
 
     public void execute(String moveUuid, RepositoryCallback<Invoice> callback) {
@@ -22,6 +23,6 @@ public class GetPrixodDocumentUseCase {
             }
             return;
         }
-        prixodRepository.getPrixodDocument(moveUuid, callback);
+        productsRepository.getPrixodDocument(moveUuid, callback);
     }
 } 

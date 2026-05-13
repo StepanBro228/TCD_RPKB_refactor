@@ -80,6 +80,9 @@ public class Product {
              freeBalanceBySeries, freeBalance, totalBalance, taken, true); // exists = true по умолчанию
     }
 
+    public boolean isExists() {
+        return exists;
+    }
 
     public String getProductLineId() { return productLineId; }
     public String getParentProductLineId() { return parentProductLineId; }
